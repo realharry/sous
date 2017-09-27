@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"fmt"
+
 	"github.com/opentable/sous/config"
 	"github.com/opentable/sous/graph"
 	"github.com/opentable/sous/util/cmdr"
@@ -33,7 +35,11 @@ func (sc *SousConfig) Execute(args []string) cmdr.Result {
 	default:
 		return cmdr.UsageErrorf("expected 0-2 arguments, received %d", len(args))
 	case 0:
-		return cmdr.Successf(c.String())
+		cfg, err := sc.Config.Config, sc.Config.Config.Validate()
+		if err == nil {
+			return cmdr.Successf(c.String())
+		}
+		return cmdr.Success(fmt.Sprintf("Invalid Config: %v\n%s", err, cfg))
 	case 1:
 		name := args[0]
 		v, err := c.GetValue(name)
