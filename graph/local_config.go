@@ -145,7 +145,7 @@ func (c *LocalSousConfig) Save(path string) error {
 }
 
 // Bytes marshals the config to a []byte
-func (c *LocalSousConfig) Bytes() []byte {
+func (c LocalSousConfig) Bytes() []byte {
 	y, err := yaml.Marshal(c.Config)
 	if err != nil {
 		panic("error marshalling config as yaml:" + err.Error())
@@ -167,7 +167,7 @@ func (c *LocalSousConfig) SetValue(path, name, value string) error {
 	return c.Save(path)
 }
 
-func (c *LocalSousConfig) String() string {
+func (c LocalSousConfig) String() string {
 	// yaml marshaller adds a trailing newline
 	return whitespace.Trim(string(c.Bytes()))
 }

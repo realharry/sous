@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"fmt"
-
 	"github.com/opentable/sous/config"
 	"github.com/opentable/sous/graph"
 	"github.com/opentable/sous/util/cmdr"
@@ -39,7 +37,7 @@ func (sc *SousConfig) Execute(args []string) cmdr.Result {
 		if err == nil {
 			return cmdr.Successf(c.String())
 		}
-		return cmdr.Success(fmt.Sprintf("Invalid Config: %v\n%s", err, cfg))
+		return cmdr.Successf("Invalid Config: %v\n%s", err, &graph.LocalSousConfig{cfg})
 	case 1:
 		name := args[0]
 		v, err := c.GetValue(name)

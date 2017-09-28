@@ -9,6 +9,8 @@ import (
 	"os"
 	"time"
 
+	yaml "gopkg.in/yaml.v2"
+
 	graphite "github.com/cyberdelia/go-metrics-graphite"
 	metrics "github.com/rcrowley/go-metrics"
 	"github.com/samsalisbury/semv"
@@ -159,17 +161,15 @@ func (ls *LogSet) Configure(cfg Config) error {
 
 type kafkaConfigurationMessage struct {
 	CallerInfo
-	hook    *kafkalogrus.KafkaLogrusHook
-	brokers []string
-	topic   string
+	hook *kafkalogrus.KafkaLogrusHook
+	cfg  Config
 }
 
 func reportKafkaConfig(hook *kafkalogrus.KafkaLogrusHook, cfg Config, ls LogSink) {
 	msg := kafkaConfigurationMessage{
 		CallerInfo: GetCallerInfo(),
 		hook:       hook,
-		brokers:    cfg.getBrokers(),
-		topic:      cfg.Kafka.Topic,
+		cfg:        cfg,
 	}
 	Deliver(msg, ls)
 }
@@ -189,10 +189,17 @@ func (kcm kafkaConfigurationMessage) EachField(f FieldReportFn) {
 	f("@loglov3-otl", "sous-kafka-config")
 	kcm.CallerInfo.EachField(f)
 	if kcm.hook == nil {
+		bytes, err := yaml.Marshal(kcm.cfg)
+		if err != nil {
+			panic(err)
+		}
+		if err == nil {
+			f("full-config", string(bytes))
+		}
 		return
 	}
-	f("logging-topic", kcm.topic)
-	f("brokers", kcm.brokers)
+	f("logging-topic", kcm.cfg.Kafka.Topic)
+	f("brokers", kcm.cfg.getBrokers())
 	f("logger-id", kcm.hook.Id())
 	f("levels", kcm.hook.Levels())
 }
