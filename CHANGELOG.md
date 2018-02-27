@@ -10,6 +10,8 @@ with respect to its command line interface and HTTP interface.
 
 ### Added
 * Server: Include connection string in db connection error log.
+* Server: PUT /single-deployment endpoint immediately adds a rectification
+  to the queue and returns a link to monitor for completion.
 
 ### Changed
 * All: Top-level global logger labeled "GLOBAL".
