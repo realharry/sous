@@ -89,7 +89,7 @@ func (rs *resourceState) Update(qBody Comparable, headers map[string]string) (Up
 }
 
 func (rs *resourceState) Delete(headers map[string]string) error {
-	return rs.client.deelete(rs.path, rs.qparms, rs, headers)
+	return rs.client.delete(rs.path, rs.qparms, rs, headers)
 }
 
 func (rs *resourceState) Location() string {
@@ -190,7 +190,7 @@ func (client *LiveHTTPClient) enrichState(state *resourceState, urlPath string, 
 	return state
 }
 
-func (client *LiveHTTPClient) deelete(urlPath string, qParms map[string]string, from *resourceState, headers map[string]string) error {
+func (client *LiveHTTPClient) delete(urlPath string, qParms map[string]string, from *resourceState, headers map[string]string) error {
 	return errors.Wrapf(func() error {
 		url, err := client.buildURL(urlPath, qParms)
 		etag := from.etag
