@@ -1,12 +1,12 @@
 package sous
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	"github.com/opentable/sous/util/logging"
 	"github.com/opentable/sous/util/restful"
-	"github.com/pkg/errors"
 )
 
 type (
@@ -15,15 +15,25 @@ type (
 		ClusterName, URL         string
 		locationFilter, idFilter *ResolveFilter
 		User                     User
+		QueryParams              map[string]string
 		httpErrorCount           int
+		status                   ResolveState
+		results                  chan pollResultSDP
 		logs                     logging.LogSink
+	}
+
+	pollResultSDP struct {
+		url       string
+		stat      ResolveState
+		err       error
+		resolveID string
 	}
 )
 
 // PollTimeout is the pause between each polling request to /status.
 const SDPollTimeout = 1 * time.Second
 
-func NewSingleDeploymentPoller(clusterName, serverURL string, baseFilter *ResolveFilter, user User, logs logging.LogSink) (*SingleDeploymentPoller, error) {
+func NewSingleDeploymentPoller(clusterName, serverURL string, queryParms map[string]string, baseFilter *ResolveFilter, user User, logs logging.LogSink) (*SingleDeploymentPoller, error) {
 	cl, err := restful.NewClient(serverURL, logs.Child("http"))
 	if err != nil {
 		return nil, err
@@ -44,14 +54,78 @@ func NewSingleDeploymentPoller(clusterName, serverURL string, baseFilter *Resolv
 		locationFilter: &loc,
 		idFilter:       &id,
 		User:           user,
+		QueryParams:    queryParms,
 		logs:           logs.Child(clusterName),
 	}, nil
 }
 
+// Wait begins the process of polling for cluster statuses, waits for it to
+// complete, and then returns the result, as long as the provided context is not
+// cancelled.
+func (sdp *SingleDeploymentPoller) Wait(ctx context.Context) (ResolveState, error) {
+	var resolveState ResolveState
+	var err error
+	done := make(chan struct{})
+	go func() {
+		resolveState, err = sdp.waitForever()
+		close(done)
+	}()
+	select {
+	case <-done:
+		return resolveState, err
+	case <-ctx.Done():
+		return resolveState, ctx.Err()
+	}
+}
+
+func (sdp *SingleDeploymentPoller) waitForever() (ResolveState, error) {
+	sdp.results = make(chan pollResultSDP)
+	// Retrieve the list of servers known to our main server.
+	clusters := &serverListData{}
+	if _, err := sdp.Retrieve("./servers", nil, clusters, sdp.User.HTTPHeaders()); err != nil {
+		return ResolveFailed, err
+	}
+
+	// Get the up-to-the-moment version of the GDM.
+	gdm := &gdmData{}
+	if _, err := sdp.Retrieve("./gdm", nil, gdm, sdp.User.HTTPHeaders()); err != nil {
+		return ResolveFailed, err
+	}
+
+	return sdp.poll(), nil
+}
+func (sdp *SingleDeploymentPoller) finished() bool {
+	return sdp.status >= ResolveTERMINALS
+}
+
+func (sdp *SingleDeploymentPoller) updateStatus(update pollResultSDP) {
+
+	sdp.status = update.stat
+}
+
+func (sdp *SingleDeploymentPoller) poll() ResolveState {
+	done := make(chan struct{})
+	go func() {
+		for {
+			update := <-sdp.results
+			sdp.updateStatus(update)
+			if sdp.finished() {
+				close(done)
+				return
+			}
+		}
+	}()
+
+	go sdp.start(sdp.results, done)
+
+	<-done
+	return sdp.status
+}
+
 // start issues a new /status request, reporting the state as computed.
 // c.f. pollOnce.
-func (sdp *SingleDeploymentPoller) start(rs chan pollResult, done chan struct{}) {
-	rs <- pollResult{url: sdp.URL, stat: ResolveNotPolled}
+func (sdp *SingleDeploymentPoller) start(rs chan pollResultSDP, done chan struct{}) {
+	rs <- pollResultSDP{url: sdp.URL, stat: ResolveNotPolled}
 	pollResult := sdp.pollOnce()
 	rs <- pollResult
 	ticker := time.NewTicker(SDPollTimeout)
@@ -67,19 +141,17 @@ func (sdp *SingleDeploymentPoller) start(rs chan pollResult, done chan struct{})
 	}
 }
 
-func (sdp *SingleDeploymentPoller) result(rs ResolveState, data *statusData, err error) pollResult {
+func (sdp *SingleDeploymentPoller) result(rs ResolveState, data *statusData, err error) pollResultSDP {
 	resolveID := "<none in progress>"
 	if data.InProgress != nil {
 		resolveID = data.InProgress.Started.String()
 	}
-	return pollResult{url: sdp.URL, stat: rs, resolveID: resolveID, err: err}
+	return pollResultSDP{url: sdp.URL, stat: rs, resolveID: resolveID, err: err}
 }
 
-func (sdp *SingleDeploymentPoller) pollOnce() pollResult {
+func (sdp *SingleDeploymentPoller) pollOnce() pollResultSDP {
 	data := &statusData{}
-	if _, err := sdp.Retrieve("./status", nil, data, sdp.User.HTTPHeaders()); err != nil {
-		reportDebugSubPollerMessage(fmt.Sprintf("%s: error on GET /status: %s", sdp.ClusterName, errors.Cause(err)), sdp.logs)
-		reportDebugSubPollerMessage(fmt.Sprintf("%s: %T %+v", sdp.ClusterName, errors.Cause(err), err), sdp.logs)
+	if _, err := sdp.Retrieve("./deploy-queue-item ", sdp.QueryParams, data, sdp.User.HTTPHeaders()); err != nil {
 		sdp.httpErrorCount++
 		if sdp.httpErrorCount > 10 {
 			return sdp.result(
@@ -116,48 +188,37 @@ func (sdp *SingleDeploymentPoller) pollOnce() pollResult {
 func (sdp *SingleDeploymentPoller) stateFeatures(kind string, rezState *ResolveStatus) (*Deployment, *DiffResolution) {
 	current := diffResolutionForSDP(rezState, sdp.locationFilter)
 	srvIntent := serverIntentSDP(rezState, sdp.locationFilter)
-	reportDebugSubPollerMessage(fmt.Sprintf("%s reports %s intent to resolve [%v]", sdp.URL, kind, srvIntent), sdp.logs)
-	reportDebugSubPollerMessage(fmt.Sprintf("%s reports %s rez: %v", sdp.URL, kind, current), sdp.logs)
 
 	return srvIntent, current
 }
 
 func diffResolutionForSDP(rstat *ResolveStatus, rf *ResolveFilter) *DiffResolution {
 	if rstat == nil {
-		reportDebugSubPollerMessage(fmt.Sprintf("Status was nil - no match for %s", rf), logging.Log)
 		return nil
 	}
 	rezs := rstat.Log
 	for _, rez := range rezs {
-		reportDebugSubPollerMessage(fmt.Sprintf("Checking resolution for: %#v(%[1]T)", rez.ManifestID), logging.Log)
 		if rf.FilterManifestID(rez.ManifestID) {
-			reportDebugSubPollerMessage(fmt.Sprintf("Matching intent for %s: %#v", rf, rez), logging.Log)
 			return &rez
 		}
 	}
-	reportDebugSubPollerMessage(fmt.Sprintf("No match for %s in %d entries", rf, len(rezs)), logging.Log)
 	return nil
 }
 
 func serverIntentSDP(rstat *ResolveStatus, rf *ResolveFilter) *Deployment {
-	reportDebugSubPollerMessage(fmt.Sprintf("Filtering with %q", rf), logging.Log)
 	if rstat == nil {
-		reportDebugSubPollerMessage("Nil resolve status!", logging.Log)
 		return nil
 	}
-	reportDebugSubPollerMessage(fmt.Sprintf("Filtering %s", rstat.Intended), logging.Log)
 
 	var dep *Deployment
 	for _, d := range rstat.Intended {
 		if rf.FilterDeployment(d) {
 			if dep != nil {
-				reportDebugSubPollerMessage(fmt.Sprintf("With %s we didn't match exactly one deployment.", rf), logging.Log)
 				return nil
 			}
 			dep = d
 		}
 	}
-	reportDebugSubPollerMessage(fmt.Sprintf("Filtering found %s", dep), logging.Log)
 	return dep
 }
 
