@@ -6,7 +6,11 @@ import (
 	"github.com/samsalisbury/semv"
 )
 
-func newServerComponentLocator(ls LogSink, cfg LocalSousConfig, ins sous.Inserter, sm *ServerStateManager, rf *sous.ResolveFilter, ar *sous.AutoResolver, v semv.Version, qs *sous.R11nQueueSet) server.ComponentLocator {
+func newServerComponentLocator(
+	ls LogSink, cfg LocalSousConfig, ins sous.Inserter, sm *ServerStateManager,
+	rf *sous.ResolveFilter, ar *sous.AutoResolver, v semv.Version,
+	qs QueueSetFactory,
+) server.ComponentLocator {
 	cm := sous.MakeClusterManager(sm.StateManager)
 	dm := sous.MakeDeploymentManager(sm.StateManager)
 	return server.ComponentLocator{
@@ -20,23 +24,19 @@ func newServerComponentLocator(ls LogSink, cfg LocalSousConfig, ins sous.Inserte
 		ResolveFilter:     rf,
 		AutoResolver:      ar,
 		Version:           v,
-		QueueSet:          qs,
+		QueueSetFactory:   qs,
 	}
 
 }
 
 // NewR11nQueueSet returns a new queue set configured to start processing r11ns
 // immediately.
-func NewR11nQueueSet(d sous.Deployer, r sous.Registry, rf *sous.ResolveFilter, sr StateReader) *sous.R11nQueueSet {
-	return sous.NewR11nQueueSet(sous.R11nQueueStartWithHandler(
-		func(qr *sous.QueuedR11n) sous.DiffResolution {
-			qr.Rectification.Begin(d, r, rf, sr.StateReader)
-			return qr.Rectification.Wait()
-		}))
+func NewR11nQueueSet(d sous.Deployer, r sous.Registry) sous.QueueSetFactory {
+	return func(rf *sous.ResolveFilter, sr sous.StateReader) *sous.R11nQueueSet {
+		return sous.NewR11nQueueSet(sous.R11nQueueStartWithHandler(
+			func(qr *sous.QueuedR11n) sous.DiffResolution {
+				qr.Rectification.Begin(d, r, rf, sr.StateReader)
+				return qr.Rectification.Wait()
+			}))
+	}
 }
-
-/*
-ar.currentRecorder = ar.Resolver.Begin(ar.GDM, state.Defs.Clusters)
-r:= &ResolveFilter{}
-clusters = r.FilteredClusters(clusters)
-*/

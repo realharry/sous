@@ -31,10 +31,14 @@ type (
 		sous.DeploymentManager // xxx temporary?
 		ResolveFilter          *sous.ResolveFilter
 		*sous.AutoResolver
-		Version  semv.Version
-		QueueSet sous.QueueSet
+		Version         semv.Version
+		QueueSetFactory sous.QueueSetFactory
 	}
 )
+
+func (ctx ComponentLocator) queueSet() sous.QueueSet {
+	return ctx.QueueSetFactory(ctx.ResolveFilter, ctx.StateManager)
+}
 
 func (ctx ComponentLocator) liveState() *sous.State {
 	state, err := ctx.StateManager.ReadState()

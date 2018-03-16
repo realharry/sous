@@ -45,7 +45,7 @@ func (r *R11nResource) Get(_ *restful.RouteMap, _ http.ResponseWriter, req *http
 	rid, ridErr := r11nIDFromRoute(req)
 	wait := req.URL.Query().Get("wait") == "true"
 	return &GETR11nHandler{
-		QueueSet:          r.context.QueueSet,
+		QueueSet:          r.context.queueSet(),
 		WaitForResolution: wait,
 		DeploymentID:      did,
 		DeploymentIDErr:   didErr,

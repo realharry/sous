@@ -15,7 +15,7 @@ import (
 func TestNewR11nResource(t *testing.T) {
 	qs := &sous.R11nQueueSet{}
 	c := ComponentLocator{
-		QueueSet: qs,
+		QueueSetFactory: testQueueSetFactory(qs),
 	}
 	dq := newR11nResource(c)
 	rm := routemap(c)
@@ -81,11 +81,14 @@ func TestR11nResource_Get_no_errors(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			dr := &R11nResource{}
 			req := makeRequestWithQuery(t, tc.query)
-			c := ComponentLocator{}
+			qs := &sous.R11nQueueSet{}
+			c := ComponentLocator{
+				QueueSetFactory: testQueueSetFactory(qs),
+			}
 			rm := routemap(c)
 
+			dr := &R11nResource{context: c}
 			got := dr.Get(rm, nil, req, nil).(*GETR11nHandler)
 
 			gotDID := got.DeploymentID

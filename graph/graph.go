@@ -577,8 +577,6 @@ func newClusterSpecificHTTPClient(c HTTPClient, dff *config.DeployFilterFlags, l
 	return &ClusterSpecificHTTPClient{HTTPClient: cl}, nil
 }
 
-// newHTTPClient returns an HTTP client if c.Server is not empty.
-// Otherwise it returns nil, and emits some warnings.
 func newHTTPClient(c LocalSousConfig, user sous.User, srvr ServerHandler, log LogSink) (HTTPClient, error) {
 	if c.Server == "" {
 		messages.ReportLogFieldsMessageToConsole("No server set, Sous is running in server or workstation mode.", logging.WarningLevel, log)
@@ -654,9 +652,6 @@ func NewCurrentGDM(state *sous.State) (CurrentGDM, error) {
 	}
 	return CurrentGDM{deployments}, initErr(err, "expanding state")
 }
-
-// The funcs named makeXXX below are used to create specific implementations of
-// sous native types.
 
 func newInserter(cfg LocalSousConfig, nc lazyNameCache) (sous.Inserter, error) {
 	if cfg.Server == "" {

@@ -20,8 +20,8 @@ import (
 func TestSingleDeploymentResource(t *testing.T) {
 	qs, _ := sous.NewQueueSetSpy()
 	cl := ComponentLocator{
-		QueueSet:     qs,
-		StateManager: &sous.DummyStateManager{State: sous.DefaultStateFixture()},
+		QueueSetFactory: testQueueSetFactory(qs),
+		StateManager:    &sous.DummyStateManager{State: sous.DefaultStateFixture()},
 	}
 	r := newSingleDeploymentResource(cl)
 
@@ -67,7 +67,7 @@ func TestSingleDeploymentResource(t *testing.T) {
 		if psdh.req != req {
 			t.Errorf("PUT handler didn't get the Request")
 		}
-		if psdh.QueueSet != cl.QueueSet {
+		if psdh.QueueSet != cl.queueSet() {
 			t.Errorf("PUT handler didn't get the QueueSet")
 		}
 		if psdh.routeMap != rm {
@@ -156,9 +156,9 @@ func TestPUTSingleDeploymentHandler_Exchange(t *testing.T) {
 		sm := &sous.DummyStateManager{State: sous.DefaultStateFixture()}
 		log, _ := logging.NewLogSinkSpy()
 		cl := ComponentLocator{
-			StateManager: sm,
-			QueueSet:     qs,
-			LogSink:      log,
+			StateManager:    sm,
+			QueueSetFactory: testQueueSetFactory(qs),
+			LogSink:         log,
 		}
 		r := newSingleDeploymentResource(cl)
 

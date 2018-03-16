@@ -23,7 +23,7 @@ func makeRequestWithQuery(t *testing.T, query string) *http.Request {
 func TestNewDeployQueueResource(t *testing.T) {
 	qs := &sous.R11nQueueSet{}
 	c := ComponentLocator{
-		QueueSet: qs,
+		QueueSetFactory: testQueueSetFactory(qs),
 	}
 	rm := routemap(c)
 	dq := newDeployQueueResource(c)
@@ -97,10 +97,11 @@ func TestDeployQueueResource_Get_no_errors(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			c := ComponentLocator{}
+			qs := &sous.R11nQueueSet{}
+			c := ComponentLocator{QueueSetFactory: testQueueSetFactory(qs)}
 			rm := routemap(c)
 
-			dr := &DeployQueueResource{}
+			dr := &DeployQueueResource{context: c}
 			req := makeRequestWithQuery(t, tc.query)
 			got := dr.Get(rm, nil, req, nil).(*GETDeployQueueHandler)
 
@@ -134,9 +135,10 @@ func TestDeployQueueResource_Get_DeploymentID_errors(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.wantDIDErr, func(t *testing.T) {
-			c := ComponentLocator{}
+			qs := &sous.R11nQueueSet{}
+			c := ComponentLocator{QueueSetFactory: testQueueSetFactory(qs)}
 			rm := routemap(c)
-			dr := &DeployQueueResource{}
+			dr := &DeployQueueResource{context: c}
 			req := makeRequestWithQuery(t, tc.query)
 			got := dr.Get(rm, nil, req, nil).(*GETDeployQueueHandler)
 

@@ -23,6 +23,9 @@ type (
 		sync.RWMutex
 	}
 
+	// QueueSetFactory creates a QueueSet.
+	QueueSetFactory func(*ResolveFilter, StateReader) QueueSet
+
 	// QueueSetSpy is a spy for the QueueSet interface.
 	QueueSetSpy struct {
 		*spies.Spy

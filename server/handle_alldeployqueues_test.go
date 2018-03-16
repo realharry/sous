@@ -10,12 +10,19 @@ import (
 	"github.com/pborman/uuid"
 )
 
+func testQueueSetFactory(qs sous.QueueSet) sous.QueueSetFactory {
+	return func(*sous.ResolveFilter, sous.StateReader) sous.QueueSet {
+		return qs
+	}
+}
+
 // TestNewAllDeployQueuesResource checks that the same queue set passed to the
 // constructor makes its way to the get handler.
 func TestNewAllDeployQueuesResource(t *testing.T) {
 	qs := &sous.R11nQueueSet{}
+	qsf := testQueueSetFactory(qs)
 	c := ComponentLocator{
-		QueueSet: qs,
+		QueueSetFactory: qsf,
 	}
 	adq := newAllDeployQueuesResource(c)
 	rm := routemap(c)

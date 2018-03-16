@@ -73,7 +73,7 @@ func (sdr *SingleDeploymentResource) Put(rm *restful.RouteMap, rw http.ResponseW
 	sdh := sdr.newSingleDeploymentHandler(req, rw, gdm)
 	return &PUTSingleDeploymentHandler{
 		SingleDeploymentHandler: sdh,
-		QueueSet:                sdr.context.QueueSet,
+		QueueSet:                sdr.context.queueSet(),
 		routeMap:                rm,
 		StateWriter:             sdr.context.StateManager,
 	}

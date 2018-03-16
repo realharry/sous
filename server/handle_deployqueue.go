@@ -31,7 +31,7 @@ func (r *DeployQueueResource) Get(_ *restful.RouteMap, _ http.ResponseWriter, re
 	qv := restful.QueryValues{Values: req.URL.Query()}
 	did, didErr := deploymentIDFromValues(qv)
 	return &GETDeployQueueHandler{
-		QueueSet:        r.context.QueueSet,
+		QueueSet:        r.context.queueSet(),
 		DeploymentID:    did,
 		DeploymentIDErr: didErr,
 	}
