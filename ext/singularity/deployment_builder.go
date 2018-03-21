@@ -181,6 +181,15 @@ func (db *deploymentBuilder) determineDeployStatus() error {
 	if rds == nil {
 		return malformedResponse{"Singularity response didn't include a deploy state. ReqId: " + reqID(rp)}
 	}
+	sing := db.req.Sing
+	list, err := sing.GetPendingDeploys()
+
+	if err != nil {
+		return malformedResponse{"Singularity couldn't return pending deploy list: " + err.Error()}
+	}
+
+	//depHistList, err := sing.GetDeploys(db.request.Id, 1, 1)
+	//db.sing
 
 	if rds.PendingDeploy != nil {
 		db.Target.Status = sous.DeployStatusPending
