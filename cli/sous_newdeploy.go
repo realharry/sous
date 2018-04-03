@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/opentable/sous/config"
@@ -32,6 +33,7 @@ type SousNewDeploy struct {
 	LogSink           graph.LogSink
 	dryrunOption      string
 	waitStable        bool
+	force             bool
 	User              sous.User
 	graph.LocalSousConfig
 }
@@ -56,6 +58,8 @@ func (sd *SousNewDeploy) Help() string { return sousNewDeployHelp }
 func (sd *SousNewDeploy) AddFlags(fs *flag.FlagSet) {
 	MustAddFlags(fs, &sd.DeployFilterFlags, DeployFilterFlagsHelp)
 
+	fs.BoolVar(&sd.force, "force", false,
+		"force deploy no matter if GDM already is at the correct version")
 	fs.BoolVar(&sd.waitStable, "wait-stable", true,
 		"wait for the deploy to complete before returning (otherwise, use --wait-stable=false)")
 	fs.StringVar(&sd.dryrunOption, "dry-run", "none",
@@ -82,6 +86,8 @@ func (sd *SousNewDeploy) Execute(args []string) cmdr.Result {
 	d := server.SingleDeploymentBody{}
 	q := sd.TargetManifestID.QueryMap()
 	q["cluster"] = cluster
+	q["force"] = strconv.FormatBool(sd.force)
+
 	updater, err := sd.HTTPClient.Retrieve("./single-deployment", q, &d, nil)
 	if err != nil {
 		return cmdr.InternalErrorf("Failed to retrieve current deployment: %s", err)
