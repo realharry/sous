@@ -113,6 +113,8 @@ tasks:
     desc: runs test-integration from make file
     cmds:
       - cd ./integration/test-registry
+      - pwd
+      - ls
       - docker-compose up -d
       - cd ../..
       - task: sous-qa-setup
