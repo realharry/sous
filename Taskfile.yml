@@ -114,7 +114,6 @@ tasks:
     cmds:
       - task: sous-qa-setup
       - cd ./integration/test-registry && docker-compose up -d
-      - task: sous-qa-setup
       - "{{.INTEGRATION_TEST_RUN}} | ./bin/gotest-to-teamcity"
 
   integration:
