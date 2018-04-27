@@ -70,7 +70,12 @@ func action() int {
 		return InitializationFailedExitCode
 	}
 
-	return c.Invoke(os.Args).ExitCode()
+	returnResult := c.Invoke(os.Args)
+	traceID := returnResult.GetTraceID()
+	if len(traceID) > 0 {
+		fmt.Fprintln(os.Stderr, fmt.Sprintf("ot-requestid: %s", traceID))
+	}
+	return returnResult.ExitCode()
 }
 
 func cleanUpLogging(mainGraph *graph.SousGraph, preParseLogSet *logging.LogSet) {

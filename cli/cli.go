@@ -12,6 +12,7 @@ import (
 
 	"github.com/opentable/sous/config"
 	"github.com/opentable/sous/graph"
+	sous "github.com/opentable/sous/lib"
 	"github.com/opentable/sous/util/cmdr"
 	"github.com/opentable/sous/util/logging"
 	"github.com/opentable/sous/util/logging/messages"
@@ -49,6 +50,7 @@ type (
 		*cmdr.CLI
 		LogSink logging.LogSink
 		graph   *graph.SousGraph
+		TraceID sous.TraceID
 	}
 	// Addable objects are able to receive lists of interface{}, presumably to add
 	// them to a DI registry. Abstracts Psyringe's Add()
@@ -87,6 +89,7 @@ func (cli *CLI) Invoke(args []string) cmdr.Result {
 	}
 	reportInvocation(ls, start, args)
 	res := cli.CLI.Invoke(args)
+	res.SetTraceID(cli.CLI.TraceID)
 	reportCLIResult(ls, args, start, res)
 	return res
 }

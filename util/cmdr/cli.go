@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"sort"
+
+	sous "github.com/opentable/sous/lib"
 )
 
 type (
@@ -31,6 +33,7 @@ type (
 		// output when Output.Indent() is called inside a command. If left
 		// empty, defaults to DefaultIndentString.
 		IndentString string
+		TraceID      sous.TraceID
 	}
 	// Hooks is a collection of command hooks. If a hook returns a non-nil error
 	// it cancels execution and the error is displayed to the user.

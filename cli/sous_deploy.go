@@ -2,11 +2,9 @@ package cli
 
 import (
 	"flag"
-	"fmt"
 
 	"github.com/opentable/sous/config"
 	"github.com/opentable/sous/graph"
-	sous "github.com/opentable/sous/lib"
 	"github.com/opentable/sous/util/cmdr"
 )
 
@@ -18,7 +16,6 @@ type SousDeploy struct {
 	waitStable        bool
 	force             bool
 	dryrunOption      string
-	TraceID           sous.TraceID
 }
 
 func init() { TopLevelCommands["deploy"] = &SousDeploy{} }
@@ -58,5 +55,5 @@ func (sd *SousDeploy) Execute(args []string) cmdr.Result {
 		return EnsureErrorResult(err)
 	}
 
-	return cmdr.Success(fmt.Sprintf("Done: ot-requestid: %s", sd.TraceID))
+	return cmdr.Success("Done.")
 }

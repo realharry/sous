@@ -4,6 +4,8 @@ import (
 	"encoding/base64"
 	"fmt"
 	"unicode/utf8"
+
+	sous "github.com/opentable/sous/lib"
 )
 
 type (
@@ -11,6 +13,8 @@ type (
 	Result interface {
 		// ExitCode is the exit code the program should exit with based on this
 		// result.
+		SetTraceID(traceID sous.TraceID)
+		GetTraceID() sous.TraceID
 		ExitCode() int
 	}
 	Tipper interface {
@@ -20,11 +24,14 @@ type (
 	SuccessResult struct {
 		// Data is the real return value of this function, it will be printed to
 		// stdout by default, for consumption by other commands/pipelines etc.
-		Data []byte
+		Data    []byte
+		TraceID sous.TraceID
 	}
 )
 
-func (s SuccessResult) ExitCode() int { return EX_OK }
+func (s SuccessResult) GetTraceID() sous.TraceID        { return s.TraceID }
+func (s SuccessResult) SetTraceID(traceID sous.TraceID) { s.TraceID = traceID }
+func (s SuccessResult) ExitCode() int                   { return EX_OK }
 
 func (s SuccessResult) String() string {
 	if utf8.Valid(s.Data) {

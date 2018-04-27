@@ -3,6 +3,8 @@ package cmdr
 import (
 	"fmt"
 	"os"
+
+	sous "github.com/opentable/sous/lib"
 )
 
 type (
@@ -26,7 +28,8 @@ type (
 		Tip string
 		// Err is an underlying error, if any, which may also be shown to the
 		// user.
-		Err error
+		Err     error
+		TraceID sous.TraceID
 	}
 	// InternalErr signifies programmer error. The user only sees these when
 	// we mess up.
@@ -82,14 +85,24 @@ func UnknownErrorf(format string, v ...interface{}) UnknownErr {
 	return UnknownErr{newError(format, v...)}
 }
 
-func (e InternalErr) ExitCode() int { return EX_SOFTWARE }
-func (e UsageErr) ExitCode() int    { return EX_USAGE }
-func (e OSErr) ExitCode() int       { return EX_OSERR }
-func (e IOErr) ExitCode() int       { return EX_IOERR }
-func (e UnknownErr) ExitCode() int  { return 255 }
-func (e *cliErr) ExitCode() int     { return 255 }
-
-func (e *cliErr) UserTip() string { return e.Tip }
+func (e InternalErr) ExitCode() int                   { return EX_SOFTWARE }
+func (e InternalErr) GetTraceID() sous.TraceID        { return e.TraceID }
+func (e InternalErr) SetTraceID(traceID sous.TraceID) { e.TraceID = traceID }
+func (e UsageErr) ExitCode() int                      { return EX_USAGE }
+func (e UsageErr) GetTraceID() sous.TraceID           { return e.TraceID }
+func (e UsageErr) SetTraceID(traceID sous.TraceID)    { e.TraceID = traceID }
+func (e OSErr) ExitCode() int                         { return EX_OSERR }
+func (e OSErr) GetTraceID() sous.TraceID              { return e.TraceID }
+func (e OSErr) SetTraceID(traceID sous.TraceID)       { e.TraceID = traceID }
+func (e IOErr) ExitCode() int                         { return EX_IOERR }
+func (e IOErr) GetTraceID() sous.TraceID              { return e.TraceID }
+func (e UnknownErr) ExitCode() int                    { return 255 }
+func (e UnknownErr) GetTraceID() sous.TraceID         { return e.TraceID }
+func (e UnknownErr) SetTraceID(traceID sous.TraceID)  { e.TraceID = traceID }
+func (e *cliErr) ExitCode() int                       { return 255 }
+func (e *cliErr) GetTraceID() sous.TraceID            { return e.TraceID }
+func (e *cliErr) SetTraceID(traceID sous.TraceID)     { e.TraceID = traceID }
+func (e *cliErr) UserTip() string                     { return e.Tip }
 
 func (e *cliErr) Error() string {
 	if e.Err == nil {
