@@ -76,7 +76,7 @@ func (sr *SousRectify) Execute(args []string) cmdr.Result {
 	}
 
 	if err := rectify.Do(); err != nil {
-		return EnsureErrorResult(err)
+		return EnsureErrorResult(err, "")
 	}
 
 	return cmdr.Success()

@@ -56,7 +56,7 @@ func (*Sous) Help() string { return sousHelp }
 // run 'sous' with not subcommand.
 func (s *Sous) Execute(args []string) cmdr.Result {
 	r := s.CLI.InvokeWithoutPrinting([]string{"sous", "help"})
-	success, ok := r.(cmdr.SuccessResult)
+	success, ok := r.(*cmdr.SuccessResult)
 	if !ok {
 		return s.usage()
 	}

@@ -41,7 +41,7 @@ func (su *SousUpdate) Execute(args []string) cmdr.Result {
 	}
 
 	if err := update.Do(); err != nil {
-		return EnsureErrorResult(err)
+		return EnsureErrorResult(err, "")
 	}
 	return cmdr.Success("Updated global manifest.")
 }

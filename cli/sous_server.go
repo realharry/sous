@@ -51,7 +51,7 @@ func (ss *SousServer) Execute(args []string) cmdr.Result {
 	}
 
 	if err := server.Do(); err != nil {
-		return EnsureErrorResult(err)
+		return EnsureErrorResult(err, "")
 	}
 	return cmdr.Success("Done serving for Sous.")
 }

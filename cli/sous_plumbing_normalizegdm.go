@@ -30,10 +30,10 @@ func (sqa *SousPlumbingNormalizeGDM) Execute(args []string) cmdr.Result {
 
 	state, err := dsm.ReadState()
 	if err != nil {
-		return EnsureErrorResult(err)
+		return EnsureErrorResult(err, "")
 	}
 	if err := dsm.WriteState(state, sous.User{}); err != nil {
-		return EnsureErrorResult(err)
+		return EnsureErrorResult(err, "")
 	}
 	return cmdr.Success("Normalized.")
 }

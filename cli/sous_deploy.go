@@ -5,6 +5,7 @@ import (
 
 	"github.com/opentable/sous/config"
 	"github.com/opentable/sous/graph"
+	sous "github.com/opentable/sous/lib"
 	"github.com/opentable/sous/util/cmdr"
 )
 
@@ -16,6 +17,7 @@ type SousDeploy struct {
 	waitStable        bool
 	force             bool
 	dryrunOption      string
+	TraceID           sous.TraceID
 }
 
 func init() { TopLevelCommands["deploy"] = &SousDeploy{} }
@@ -48,12 +50,14 @@ func (sd *SousDeploy) AddFlags(fs *flag.FlagSet) {
 func (sd *SousDeploy) Execute(args []string) cmdr.Result {
 	deploy, err := sd.SousGraph.GetDeploy(sd.DeployFilterFlags, sd.dryrunOption, sd.force, sd.waitStable)
 	if err != nil {
-		return cmdr.EnsureErrorResult(err)
+		return EnsureErrorResult(err, sd.TraceID)
 	}
 
 	if err := deploy.Do(); err != nil {
-		return EnsureErrorResult(err)
+		return EnsureErrorResult(err, sd.TraceID)
 	}
 
-	return cmdr.Success("Done.")
+	result := cmdr.Success("Done.")
+	result.SetTraceID(sd.TraceID)
+	return result
 }

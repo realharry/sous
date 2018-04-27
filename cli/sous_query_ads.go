@@ -40,7 +40,7 @@ func (*SousQueryAds) RegisterOn(psy Addable) {
 func (sb *SousQueryAds) Execute(args []string) cmdr.Result {
 	ads, err := sb.Deployer.RunningDeployments(sb.Registry, sb.State.Defs.Clusters)
 	if err != nil {
-		return EnsureErrorResult(err)
+		return EnsureErrorResult(err, "")
 	}
 	sous.DumpDeployStatuses(os.Stdout, ads)
 	return cmdr.Success()

@@ -83,7 +83,7 @@ func (c *CLI) Invoke(args []string) Result {
 
 // IsSuccess checks if a Result is a success
 func (c *CLI) IsSuccess(result Result) bool {
-	_, ok := result.(SuccessResult)
+	_, ok := result.(*SuccessResult)
 	return ok
 }
 
@@ -91,8 +91,8 @@ func (c *CLI) IsSuccess(result Result) bool {
 // handles tips when the result is an error, etc.
 // returns true if the result was a success
 func (c *CLI) OutputResult(result Result) {
-	if success, ok := result.(SuccessResult); ok {
-		c.handleSuccessResult(success)
+	if success, ok := result.(*SuccessResult); ok {
+		c.handleSuccessResult(*success)
 	}
 	if result == nil {
 		result = InternalErrorf("nil result returned from %T", c.Root)

@@ -29,9 +29,9 @@ type (
 	}
 )
 
-func (s SuccessResult) GetTraceID() sous.TraceID        { return s.TraceID }
-func (s SuccessResult) SetTraceID(traceID sous.TraceID) { s.TraceID = traceID }
-func (s SuccessResult) ExitCode() int                   { return EX_OK }
+func (s *SuccessResult) GetTraceID() sous.TraceID        { return s.TraceID }
+func (s *SuccessResult) SetTraceID(traceID sous.TraceID) { s.TraceID = traceID }
+func (s *SuccessResult) ExitCode() int                   { return EX_OK }
 
 func (s SuccessResult) String() string {
 	if utf8.Valid(s.Data) {
@@ -40,12 +40,12 @@ func (s SuccessResult) String() string {
 	return base64.StdEncoding.EncodeToString(s.Data)
 }
 
-func Success(v ...interface{}) SuccessResult {
-	return SuccessResult{Data: []byte(fmt.Sprintln(v...))}
+func Success(v ...interface{}) Result {
+	return &SuccessResult{Data: []byte(fmt.Sprintln(v...))}
 }
 
-func SuccessData(d []byte) SuccessResult { return SuccessResult{Data: d} }
+func SuccessData(d []byte) Result { return &SuccessResult{Data: d} }
 
 func Successf(format string, v ...interface{}) Result {
-	return SuccessResult{Data: []byte(fmt.Sprintf(format+"\n", v...))}
+	return &SuccessResult{Data: []byte(fmt.Sprintf(format+"\n", v...))}
 }

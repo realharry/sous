@@ -41,7 +41,7 @@ func (smg *SousMetadataGet) Execute(args []string) cmdr.Result {
 	_, err := smg.HTTPClient.Retrieve("/manifest", smg.TargetManifestID.QueryMap(), &mani, nil)
 
 	if err != nil {
-		return EnsureErrorResult(errors.Errorf("No manifest matched by %v.", smg.ResolveFilter))
+		return EnsureErrorResult(errors.Errorf("No manifest matched by %v.", smg.ResolveFilter), "")
 	}
 
 	for clusterName, deploySpec := range mani.Deployments {
@@ -50,7 +50,7 @@ func (smg *SousMetadataGet) Execute(args []string) cmdr.Result {
 		}
 		smg.OutWriter.Write([]byte(fmt.Sprintf("Metadata for deployment in %s\n", clusterName)))
 		if err := outputMetadata(deploySpec.Metadata, clusterName, args, smg.OutWriter); err != nil {
-			return EnsureErrorResult(err)
+			return EnsureErrorResult(err, "")
 		}
 	}
 
@@ -61,7 +61,7 @@ func outputMetadata(metadata sous.Metadata, clusterName string, args []string, o
 	if len(args) == 0 {
 		yml, err := yaml.Marshal(metadata)
 		if err != nil {
-			return EnsureErrorResult(err)
+			return EnsureErrorResult(err, "")
 		}
 		out.Write(yml)
 		return nil

@@ -32,5 +32,5 @@ func (*SousQueryArtifacts) Help() string { return sousQueryArtifactsHelp }
 // Execute defines the behavior of `sous query gdm`
 func (sqa *SousQueryArtifacts) Execute(args []string) cmdr.Result {
 	err := sqa.RegistryDumper.AsTable(sqa.ErrWriter)
-	return ProduceResult(err)
+	return ProduceResult(err, "")
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/opentable/sous/config"
 	"github.com/opentable/sous/graph"
+	sous "github.com/opentable/sous/lib"
 	"github.com/opentable/sous/util/cmdr"
 )
 
@@ -18,6 +19,7 @@ type SousNewDeploy struct {
 	waitStable        bool
 	force             bool
 	dryrunOption      string
+	TraceID           sous.TraceID
 }
 
 func init() { TopLevelCommands["newdeploy"] = &SousNewDeploy{} }
@@ -57,7 +59,7 @@ func (sd *SousNewDeploy) Execute(args []string) cmdr.Result {
 	}
 
 	if err := deploy.Do(); err != nil {
-		return EnsureErrorResult(err)
+		return EnsureErrorResult(err, "")
 	}
 	return cmdr.Success("Done.")
 }

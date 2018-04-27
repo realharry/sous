@@ -37,33 +37,33 @@ func (sme *SousManifestEdit) Execute(args []string) cmdr.Result {
 	file, err := ioutil.TempFile("", "sous_manifest")
 
 	if err != nil {
-		return EnsureErrorResult(err)
+		return EnsureErrorResult(err, "")
 	}
 
 	get, err := sme.SousGraph.GetManifestGet(sme.DeployFilterFlags, file, &up)
 	if err != nil {
-		return EnsureErrorResult(err)
+		return EnsureErrorResult(err, "")
 	}
 
 	set, err := sme.SousGraph.GetManifestSet(sme.DeployFilterFlags, &up, file)
 	if err != nil {
-		return EnsureErrorResult(err)
+		return EnsureErrorResult(err, "")
 	}
 
 	if err := get.Do(); err != nil {
-		return EnsureErrorResult(errors.Wrapf(err, "getting manifest into %s", file.Name()))
+		return EnsureErrorResult(errors.Wrapf(err, "getting manifest into %s", file.Name()), "")
 	}
 
 	if err := doEdit(file.Name()); err != nil {
-		return EnsureErrorResult(errors.Wrapf(err, "editing file at %s", file.Name()))
+		return EnsureErrorResult(errors.Wrapf(err, "editing file at %s", file.Name()), "")
 	}
 
 	if _, err := file.Seek(0, 0); err != nil {
-		return EnsureErrorResult(err)
+		return EnsureErrorResult(err, "")
 	}
 
 	if err := set.Do(); err != nil {
-		return EnsureErrorResult(err)
+		return EnsureErrorResult(err, "")
 	}
 
 	return cmdr.Success()

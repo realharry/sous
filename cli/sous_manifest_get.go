@@ -33,11 +33,11 @@ func (smg *SousManifestGet) Execute(args []string) cmdr.Result {
 	var up restful.Updater
 	mg, err := smg.SousGraph.GetManifestGet(smg.DeployFilterFlags, os.Stdout, &up)
 	if err != nil {
-		return EnsureErrorResult(err)
+		return EnsureErrorResult(err, "")
 	}
 
 	if err := mg.Do(); err != nil {
-		return EnsureErrorResult(err)
+		return EnsureErrorResult(err, "")
 	}
 
 	return cmdr.Success()

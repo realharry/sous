@@ -23,22 +23,24 @@ import (
 )
 
 // GeneralErrorf is an convenience method for returning from commands.
-func GeneralErrorf(format string, a ...interface{}) cmdr.ErrorResult {
-	return EnsureErrorResult(fmt.Errorf(format, a...))
+func GeneralErrorf(traceID sous.TraceID, format string, a ...interface{}) cmdr.ErrorResult {
+	return EnsureErrorResult(fmt.Errorf(format, a...), traceID)
 }
 
 // EnsureErrorResult is a convenience for returning from a command.
-func EnsureErrorResult(err error) cmdr.ErrorResult {
+func EnsureErrorResult(err error, traceID sous.TraceID) cmdr.ErrorResult {
 	var ls logging.LogSink
 	ls = logging.Log
 	messages.ReportLogFieldsMessage("Error:", logging.DebugLevel, ls, err)
-	return cmdr.EnsureErrorResult(err)
+	result := cmdr.EnsureErrorResult(err)
+	result.SetTraceID(traceID)
+	return result
 }
 
 // ProduceResult converts errors into Results
-func ProduceResult(err error) cmdr.Result {
+func ProduceResult(err error, traceID sous.TraceID) cmdr.Result {
 	if err != nil {
-		return EnsureErrorResult(err)
+		return EnsureErrorResult(err, traceID)
 	}
 
 	return cmdr.Success()
@@ -89,8 +91,6 @@ func (cli *CLI) Invoke(args []string) cmdr.Result {
 	}
 	reportInvocation(ls, start, args)
 	res := cli.CLI.Invoke(args)
-	res.SetTraceID(cli.CLI.TraceID)
-	reportCLIResult(ls, args, start, res)
 	return res
 }
 
@@ -159,7 +159,7 @@ func NewSousCLI(di *graph.SousGraph, s *Sous, earlyLogging logging.LogSink, out,
 				messages.ReportLogFieldsMessage("Error occurred", logging.DebugLevel, logging.Log, originalErr)
 			}
 		}
-		return EnsureErrorResult(err)
+		return EnsureErrorResult(err, "")
 	}
 
 	return cli, nil

@@ -111,7 +111,7 @@ func (si *SousInit) Execute(args []string) cmdr.Result {
 		return cmdr.UsageErrorf("manifest %q already exists", m.ID())
 	}
 	if err := si.StateWriter.WriteState(si.State, si.User); err != nil {
-		return EnsureErrorResult(err)
+		return EnsureErrorResult(err, "")
 	}
 	return SuccessYAML(m)
 }

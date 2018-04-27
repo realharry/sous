@@ -36,7 +36,7 @@ func (smg *SousMetadataSet) RegisterOn(psy Addable) {
 
 func (smg *SousMetadataSet) Execute(args []string) cmdr.Result {
 	if len(args) < 2 {
-		return EnsureErrorResult(errors.Errorf("<name> and <value> both required"))
+		return EnsureErrorResult(errors.Errorf("<name> and <value> both required"), "")
 	}
 	key := args[0]
 	value := args[1]
@@ -44,7 +44,7 @@ func (smg *SousMetadataSet) Execute(args []string) cmdr.Result {
 	mani := sous.Manifest{}
 	up, err := smg.HTTPClient.Retrieve("/manifest", smg.TargetManifestID.QueryMap(), &mani, nil)
 	if err != nil {
-		return EnsureErrorResult(err)
+		return EnsureErrorResult(err, "")
 	}
 
 	for cname, depspec := range mani.Deployments {
@@ -55,7 +55,7 @@ func (smg *SousMetadataSet) Execute(args []string) cmdr.Result {
 	}
 
 	if _, err := up.Update(&mani, smg.User.HTTPHeaders()); err != nil {
-		return EnsureErrorResult(err)
+		return EnsureErrorResult(err, "")
 	}
 
 	return cmdr.Success()

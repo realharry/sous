@@ -45,5 +45,5 @@ func (sh *SousHarvest) Execute(args []string) cmdr.Result {
 			break
 		}
 	}
-	return ProduceResult(err)
+	return ProduceResult(err, "")
 }
