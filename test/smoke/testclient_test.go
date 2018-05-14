@@ -28,8 +28,9 @@ type TestClient struct {
 	ConfigDir string
 	LogDir    string
 	// Dir is the working directory.
-	Dir           string
-	ClusterSuffix string
+	Dir               string
+	ClusterSuffix     string
+	PerCommandTimeout time.Duration
 }
 
 type sousFlags struct {
@@ -67,13 +68,14 @@ func (f *sousFlags) Args() []string {
 	return out
 }
 
-func makeClient(baseDir, sousBin string) *TestClient {
+func makeClient(baseDir, sousBin string, perCommandTimeout time.Duration) *TestClient {
 	baseDir = path.Join(baseDir, "client1")
 	return &TestClient{
-		BaseDir:   baseDir,
-		BinPath:   sousBin,
-		ConfigDir: path.Join(baseDir, "config"),
-		LogDir:    path.Join(baseDir, "logs"),
+		BaseDir:           baseDir,
+		BinPath:           sousBin,
+		ConfigDir:         path.Join(baseDir, "config"),
+		LogDir:            path.Join(baseDir, "logs"),
+		PerCommandTimeout: perCommandTimeout,
 	}
 }
 
@@ -206,7 +208,7 @@ func (c *TestClient) Run(t *testing.T, subcmd string, f *sousFlags, args ...stri
 	fmt.Fprintf(os.Stderr, "==> %s", prettyCmd)
 	relPath := mustGetRelPath(t, c.BaseDir, cmd.Dir)
 	fmt.Fprintf(allFiles, "%s %s", relPath, prettyCmd)
-	err := runWithTimeout(cmd, cancel, 3*time.Minute)
+	err := runWithTimeout(cmd, cancel, c.PerCommandTimeout)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}

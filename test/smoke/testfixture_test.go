@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/opentable/sous/dev_support/sous_qa_setup/desc"
 	sous "github.com/opentable/sous/lib"
@@ -24,6 +25,9 @@ type TestFixture struct {
 	Parent        *ParallelTestFixture
 	TestName      string
 }
+
+var clientCommandTimeoutStr = os.Getenv("SMOKE_TEST_CLIENT_TIMEOUT")
+var defaultClientCommandTimeout = 4 * time.Minute
 
 func newTestFixture(t *testing.T, parent *ParallelTestFixture, nextAddr func() string) TestFixture {
 	t.Helper()
@@ -62,7 +66,15 @@ func newTestFixture(t *testing.T, parent *ParallelTestFixture, nextAddr func() s
 		t.Fatalf("starting test cluster: %s", err)
 	}
 
-	client := makeClient(baseDir, sousBin)
+	clientCommandTimeout := defaultClientCommandTimeout
+	if clientCommandTimeoutStr != "" {
+		clientCommandTimeout, err = time.ParseDuration(clientCommandTimeoutStr)
+		if err != nil {
+			t.Fatalf("Parsing SMOKE_TEST_CLIENT_TIMEOUT='%s': %s", clientCommandTimeoutStr, err)
+		}
+	}
+
+	client := makeClient(baseDir, sousBin, clientCommandTimeout)
 	primaryServer := "http://" + c.Instances[0].Addr
 	if err := client.Configure(primaryServer, envDesc.RegistryName()); err != nil {
 		t.Fatal(err)
