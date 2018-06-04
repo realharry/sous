@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/nyarly/inlinefiles/templatestore"
@@ -95,7 +96,7 @@ func (b *Builder) applyMetadata(bp *sous.BuildProduct) error {
 	bp.VersionName = b.VersionTag(bp.Source, bp.Kind)
 	bp.RevisionName = b.RevisionTag(bp.Source, bp.RevisionName, bp.Kind, time.Now())
 
-	c := b.SourceShell.Cmd("docker", "build", "-t", bp.VersionName, "-t", bp.RevisionName, "-")
+	c := b.SourceShell.Cmd("docker", "build", "-t", strings.ToLower(bp.VersionName), "-t", strings.ToLower(bp.RevisionName), "-")
 	bf := b.metadataDockerfile(bp)
 	c.SetStdin(bf)
 
@@ -124,8 +125,8 @@ func (b *Builder) metadataDockerfile(bp *sous.BuildProduct) io.Reader {
 
 // pushToRegistry sends the built image to the registry
 func (b *Builder) pushToRegistry(bp *sous.BuildProduct) error {
-	verr := b.SourceShell.Run("docker", "push", bp.VersionName)
-	rerr := b.SourceShell.Run("docker", "push", bp.RevisionName)
+	verr := b.SourceShell.Run("docker", "push", strings.ToLower(bp.VersionName))
+	rerr := b.SourceShell.Run("docker", "push", strings.ToLower(bp.RevisionName))
 
 	if verr == nil {
 		return rerr

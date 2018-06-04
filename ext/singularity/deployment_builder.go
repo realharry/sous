@@ -344,7 +344,7 @@ func (db *deploymentBuilder) extractArtifactName() error {
 		return malformedResponse{"Singularity deploy didn't include a docker info"}
 	}
 
-	db.imageName = dkr.Image
+	db.imageName = strings.ToLower(dkr.Image)
 	return nil
 }
 
