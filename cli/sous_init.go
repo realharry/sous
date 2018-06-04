@@ -20,7 +20,8 @@ type SousInit struct {
 	StateManager *graph.ClientStateManager
 	User         sous.User
 	flags        struct {
-		Kind string
+		Kind                 string
+		SingularityRequestID string
 	}
 }
 
@@ -59,6 +60,7 @@ func (si *SousInit) AddFlags(fs *flag.FlagSet) {
 	fs.StringVar(&si.DeployFilterFlags.Flavor, "flavor", "", flavorFlagHelp)
 	fs.StringVar(&si.DeployFilterFlags.Cluster, "cluster", "", clusterFlagHelp)
 	fs.StringVar(&si.flags.Kind, "kind", "", kindFlagHelp)
+	fs.StringVar(&si.flags.SingularityRequestID, "singularity-request-id", "", "Singularity request ID (must be used with -cluster)")
 	fs.BoolVar(&si.DryRunFlag, "dryrun", false, "print out the created manifest but do not save it")
 }
 
@@ -75,6 +77,10 @@ func (si *SousInit) Execute(args []string) cmdr.Result {
 		skipHealth = false
 	case sous.ManifestKindScheduled, sous.ManifestKindOnDemand:
 		skipHealth = true
+	}
+
+	if si.flags.SingularityRequestID != "" && si.DeployFilterFlags.Cluster == "" {
+		return cmdr.UsageErrorf("If you specify -singularity-request-id you must also specify a single cluster using -cluster <cluster-name>")
 	}
 
 	m := si.Target.Manifest
