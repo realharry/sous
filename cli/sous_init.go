@@ -12,7 +12,7 @@ import (
 // SousInit is the command description for `sous init`
 type SousInit struct {
 	DeployFilterFlags config.DeployFilterFlags `inject:"optional"`
-	Flags             config.OTPLFlags         `inject:"optional"`
+	OTPLFlags         config.OTPLFlags         `inject:"optional"`
 	// DryRunFlag prints out the manifest but does not save it.
 	DryRunFlag   bool `inject:"optional"`
 	Target       graph.TargetManifest
@@ -46,23 +46,23 @@ func (si *SousInit) Help() string { return sousInitHelp }
 func (si *SousInit) RegisterOn(psy Addable) {
 	// Add a zero DepoyFilterFlags to the graph, as we assume a clean build.
 	psy.Add(&si.DeployFilterFlags)
-	psy.Add(&si.Flags)
+	psy.Add(&si.OTPLFlags)
 	psy.Add(graph.DryrunNeither)
 
 	// ugh - there has to be a better way!
-	si.Flags.Flavor = si.DeployFilterFlags.Flavor
+	si.OTPLFlags.Flavor = si.DeployFilterFlags.Flavor
 }
 
 // AddFlags adds the flags for sous init.
 func (si *SousInit) AddFlags(fs *flag.FlagSet) {
-	MustAddFlags(fs, &si.Flags, OtplFlagsHelp)
+	MustAddFlags(fs, &si.OTPLFlags, OtplFlagsHelp)
 	fs.StringVar(&si.DeployFilterFlags.Flavor, "flavor", "", flavorFlagHelp)
 	fs.StringVar(&si.DeployFilterFlags.Cluster, "cluster", "", clusterFlagHelp)
 	fs.StringVar(&si.flags.Kind, "kind", "", kindFlagHelp)
 	fs.BoolVar(&si.DryRunFlag, "dryrun", false, "print out the created manifest but do not save it")
 }
 
-// Execute fulfills the cmdr.Executor interface
+// Execute fulfills the cmdr.Executor interface.
 func (si *SousInit) Execute(args []string) cmdr.Result {
 
 	kind := sous.ManifestKind(si.flags.Kind)

@@ -115,8 +115,8 @@ func TestInvokeInit(t *testing.T) {
 	exe := justCommand(t, []string{`sous`, `init`})
 	init := exe.Cmd.(*SousInit)
 	assert.NotNil(init)
-	assert.False(init.Flags.IgnoreOTPLDeploy)
-	assert.False(init.Flags.IgnoreOTPLDeploy)
+	assert.False(init.OTPLFlags.IgnoreOTPLDeploy)
+	assert.False(init.OTPLFlags.IgnoreOTPLDeploy)
 }
 
 /*
