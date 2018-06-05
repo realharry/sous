@@ -241,6 +241,8 @@ func (nc *NameCache) GetSourceID(a *sous.BuildArtifact) (sous.SourceID, error) {
 
 // GetImageName returns the docker image name for a given source ID
 func (nc *NameCache) getImageName(sid sous.SourceID) (string, strpairs, error) {
+	sid.Location.Dir = strings.ToLower(sid.Location.Dir)
+	sid.Location.Repo = strings.ToLower(sid.Location.Repo)
 	messages.ReportLogFieldsMessage("Getting image name for", logging.ExtraDebug1Level, nc.log, sid)
 	name, qualities, err := nc.getImageNameFromCache(sid)
 	if err == nil {
