@@ -5,6 +5,7 @@ language: go
 go:
 - "1.10"
 before_install:
+- docker version
 - bin/ci-setup
 
 install:
