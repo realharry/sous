@@ -109,7 +109,7 @@ QA_DESC := $(SOUS_QA_DESC)
 endif
 
 ifndef INTEGRATION_TEST_TIMEOUT
-INTEGRATION_TEST_TIMEOUT := 30m
+INTEGRATION_TEST_TIMEOUT := 45m
 endif
 
 
@@ -122,7 +122,7 @@ DARWIN_TARBALL := $(DARWIN_RELEASE_DIR).tar.gz
 LINUX_TARBALL := $(LINUX_RELEASE_DIR).tar.gz
 
 # RELEASE_FILES are the files that this system can produce for make release.
-RELEASE_FILES := artifacts/$(DARWIN_TARBALL) artifacts/$(LINUX_TARBALL) 
+RELEASE_FILES := artifacts/$(DARWIN_TARBALL) artifacts/$(LINUX_TARBALL)
 # Right now only Linux systems can produce the .deb package as fpm fails on
 # Darwin...
 ifeq ($(shell uname),Linux)
