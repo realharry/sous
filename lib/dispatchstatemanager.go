@@ -1,6 +1,8 @@
 package sous
 
 import (
+	"fmt"
+
 	"github.com/opentable/sous/util/logging"
 	"github.com/pkg/errors"
 )
@@ -13,7 +15,13 @@ type DispatchStateManager struct {
 }
 
 // NewDispatchStateManager builds a DispatchStateManager.
-func NewDispatchStateManager(localCluster string, clusters []string, local StateManager, remote ClusterManager, ls logging.LogSink) *DispatchStateManager {
+func NewDispatchStateManager(
+	localCluster string,
+	clusters []string,
+	local StateManager,
+	remote ClusterManager,
+	ls logging.LogSink,
+) *DispatchStateManager {
 	dsm := &DispatchStateManager{
 		local:   local,
 		remotes: map[string]ClusterManager{},
@@ -22,22 +30,19 @@ func NewDispatchStateManager(localCluster string, clusters []string, local State
 	for _, n := range clusters {
 		dsm.remotes[n] = remote
 	}
-	switch lcm := local.(type) {
-	default:
-		dsm.remotes[localCluster] = MakeClusterManager(local, ls)
-	case ClusterManager:
-		dsm.remotes[localCluster] = lcm
-	}
+	dsm.remotes[localCluster] = MakeClusterManager(local, ls)
 	return dsm
 }
 
 // ReadState implements StateManager on DispatchStateManager.
 func (dsm *DispatchStateManager) ReadState() (*State, error) {
-	baseState, err := dsm.local.ReadState()
+	logging.DebugMsg(dsm.log, "DispatchStateManager ReadState")
+	baseState, err := dsm.local.ReadState() // ReadState to get e.g. Defs
 	if err != nil {
 		return nil, errors.Wrapf(err, "base state")
 	}
 	for cluster, manager := range dsm.remotes {
+		logging.DebugMsg(dsm.log, fmt.Sprintf("DispatchStateManager ReadState %q %T %[2]p", cluster, manager))
 		c, err := manager.ReadCluster(cluster)
 		if err != nil {
 			return nil, errors.Wrapf(err, cluster)
@@ -55,11 +60,13 @@ func (dsm *DispatchStateManager) ReadState() (*State, error) {
 
 // WriteState implements StateManager on DispatchStateManager.
 func (dsm *DispatchStateManager) WriteState(state *State, user User) error {
+	logging.DebugMsg(dsm.log, "DispatchStateManager WriteState")
 	deps, err := state.Deployments()
 	if err != nil {
 		return err
 	}
 	for cn, cm := range dsm.remotes {
+		logging.Debug(dsm.log, fmt.Sprintf("DispatchStateManager WriteState %q %T", cn, cm))
 		cds := deps.Filter(func(d *Deployment) bool {
 			return d.ClusterName == cn
 		})
@@ -73,6 +80,7 @@ func (dsm *DispatchStateManager) WriteState(state *State, user User) error {
 // ReadCluster implements ClusterManager on DispatchStateManager.
 func (dsm *DispatchStateManager) ReadCluster(clusterName string) (Deployments, error) {
 	cm, ok := dsm.remotes[clusterName]
+	logging.DebugMsg(dsm.log, fmt.Sprintf("DispatchStateManager ReadCluster %q %T", clusterName, cm))
 	if !ok {
 		return Deployments{}, errors.Errorf("No cluster manager for %q", clusterName)
 	}
@@ -82,6 +90,7 @@ func (dsm *DispatchStateManager) ReadCluster(clusterName string) (Deployments, e
 // WriteCluster implements ClusterManager on DispatchStateManager.
 func (dsm *DispatchStateManager) WriteCluster(clusterName string, deps Deployments, user User) error {
 	cm, ok := dsm.remotes[clusterName]
+	logging.DebugMsg(dsm.log, fmt.Sprintf("DispatchStateManager WriteCluster %q %T", clusterName, cm))
 	if !ok {
 		return errors.Errorf("No cluster manager for %q", clusterName)
 	}

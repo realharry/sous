@@ -10,6 +10,28 @@ with respect to its command line interface and HTTP interface
 ### Added
 * Server: Lower Case items to docker (handle mixed case github repos)
 
+## [Unreleased](//github.com/opentable/sous/compare/0.5.102...HEAD)
+### Added
+* Both: The client registers the digests for built artifacts to the server.
+  This enhances speed and correctness of subsequent deploys.
+
+## [0.5.102](//github.com/opentable/sous/compare/0.5.101...0.5.102)
+### Added
+* Server: Send user to singularity for Deployment
+### Fixed
+* Server: the database storage engine wasn't recording the advisory whitelists.
+
+## [0.5.101](//github.com/opentable/sous/compare/0.5.100...0.5.101)
+### Fixed
+* CLI: 'sous manifest edit' was sometimes silently failing to apply changes on macOS,
+  changes to how we re-read the temp file resolve this.
+
+### Changed
+* CLI: 'sous manifest edit' now uses a temp file with a .yaml extension so text
+  editors are more likely to apply the right highlighting and auto formatting.
+* CLI: Clearer -kind not recognised message.
+
+
 ## [0.5.100](//github.com/opentable/sous/compare/0.5.93...0.5.100)
 ### Added
 * Server: state storage toggle behind a feature flag - servers can be
