@@ -42,7 +42,7 @@ pipeline {
    				agent { label 'mesos-sous' }
           steps {
             echo "integration test"
-            sh 'make tst-integration'
+            sh 'make test-integration'
           }
         }
       }
