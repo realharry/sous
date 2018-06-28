@@ -29,21 +29,27 @@ pipeline {
   				agent { label 'mesos-sous' }
           steps {
             echo "unit test step"
-            sh 'make test-unit'
+            sh '''#!/usr/bin/env bash
+            make test-unit
+            '''
           }
         }
         stage('Smoke') {
    				agent { label 'mesos-sous' }
 					steps {
             echo "smoke test step"
-            sh 'make test-smoke'
+            sh '''#!/usr/bin/env bash
+            make test-smoke
+            '''
           }
         }
         stage('Integration') {
    				agent { label 'mesos-sous' }
           steps {
             echo "integration test"
-            sh 'make test-integration'
+            sh '''#!/usr/bin/env bash
+            make test-integration
+            '''
           }
         }
       }
