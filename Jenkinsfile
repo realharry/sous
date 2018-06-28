@@ -30,6 +30,9 @@ pipeline {
           steps {
             echo "unit test step"
             sh '''#!/usr/bin/env bash
+            /usr/local/go/bin/go version
+            cat /etc/bash.bashrc
+
             echo $PATH
             make test-unit
             '''
