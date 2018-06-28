@@ -29,7 +29,6 @@ pipeline {
   				agent { label 'mesos-sous' }
           steps {
             echo "unit test step"
-            echo $PATH
             sh '''#!/usr/bin/env bash
             echo $PATH
             make test-unit
@@ -41,6 +40,7 @@ pipeline {
 					steps {
             echo "smoke test step"
             sh '''#!/usr/bin/env bash
+            docker inspect $HOSTNAME
             make test-smoke
             '''
           }
