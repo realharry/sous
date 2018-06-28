@@ -29,9 +29,9 @@ pipeline {
   				agent { label 'mesos-sous' }
           steps {
             echo "unit test step"
-            echo 'PATH=$PATH'
+            echo $PATH
             sh '''#!/usr/bin/env bash
-            echo 'PATH=$PATH'
+            echo $PATH
             make test-unit
             '''
           }
