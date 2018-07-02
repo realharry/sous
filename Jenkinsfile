@@ -30,9 +30,28 @@ pipeline {
           steps {
             echo "unit test step"
             sh '''#!/usr/bin/env bash
-            PATH=$PATH:/usr/local/go/bin export PATH
-            echo $PATH
-            make test-unit
+echo $PATH
+PATH=$PATH:/usr/local/go/bin export PATH
+echo $PATH
+
+echo "Setting up GOPATH"
+
+mkdir -p godir/src/github.com/opentable
+ln -s $PWD ./godir/src/github.com/opentable/sous
+export GOPATH=$GOPATH:$PWD/godir
+cd $PWD/godir/src/github.com/opentable/sous
+echo $GOPATH
+
+echo "Running Tests"
+VERBOSE=1 TEAMCITY=1 make test-unit
+
+echo "Generate out file"
+go test -covermode=count -coverprofile=count.out `make export-SOUS_PACKAGES_WITH_TESTS`
+go tool cover -func=count.out
+go tool cover -html=count.out -o coverage.html
+mkdir coverage
+cp coverage.html ./coverage
+
             '''
           }
         }
