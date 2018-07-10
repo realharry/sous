@@ -407,8 +407,8 @@ docker-is-working:
 $(QA_DESC): docker-is-working sous-qa-setup
 	docker-compose version
 	docker version
-	docker-compose -f integration/test-registry/docker-compose.yml build
 	./sous_qa_setup --compose-dir ./integration/test-registry/ --out-path=$(QA_DESC)
+	docker-compose -f integration/test-registry/docker-compose.yml build
 
 setup-containers: $(QA_DESC)
 
