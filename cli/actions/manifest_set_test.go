@@ -15,6 +15,32 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestGetBadKeys_badkey(t *testing.T) {
+	mani := sous.ManifestFixture("simple")
+	env := make(map[string]string)
+	env["secrets"] = "foo"
+
+	deploy := mani.Deployments["ci"]
+	deploy.Env = env
+	mani.Deployments["ci"] = deploy
+
+	bad := getBadKeys(*mani, []string{"secret", "password"})
+	assert.True(t, len(bad) > 0)
+}
+
+func TestGetBadKeys_goodkeys(t *testing.T) {
+	mani := sous.ManifestFixture("simple")
+	env := make(map[string]string)
+	env["bar"] = "foo"
+
+	deploy := mani.Deployments["ci"]
+	deploy.Env = env
+	mani.Deployments["ci"] = deploy
+
+	bad := getBadKeys(*mani, []string{"secret", "password"})
+	assert.True(t, len(bad) == 0)
+}
+
 func TestManifestSet_ErrorOnSourceLocation(t *testing.T) {
 	project1 := sous.SourceLocation{Repo: "github.com/user/randomprojectnotmatching"}
 
