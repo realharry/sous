@@ -39,7 +39,7 @@ func (ms *ManifestSet) Do() error {
 
 	listOfKeys := []string{}
 	for _, deploySpec := range yml.Deployments {
-		for key, _ := range deploySpec.Env {
+		for key := range deploySpec.Env {
 			if strings.Contains(strings.ToLower(key), "password") || strings.Contains(strings.ToLower(key), "secret") {
 				listOfKeys = append(listOfKeys, key)
 			}
