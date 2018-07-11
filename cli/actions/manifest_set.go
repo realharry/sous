@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"strings"
 
 	sous "github.com/opentable/sous/lib"
 	"github.com/opentable/sous/util/logging"
@@ -35,6 +36,19 @@ func (ms *ManifestSet) Do() error {
 	}
 
 	messages.ReportLogFieldsMessage("Manifest in Execute", logging.ExtraDebug1Level, ms.LogSink, yml)
+
+	listOfKeys := []string{}
+	for _, deploySpec := range yml.Deployments {
+		for key, _ := range deploySpec.Env {
+			if strings.Contains(strings.ToLower(key), "password") || strings.Contains(strings.ToLower(key), "secret") {
+				listOfKeys = append(listOfKeys, key)
+			}
+		}
+	}
+
+	if len(listOfKeys) > 0 {
+		messages.ReportLogFieldsMessageToConsole(fmt.Sprintf("The following environment variables have been set, please consider removing since the sous manifest is not secure. %s", listOfKeys), logging.InformationLevel, ms.LogSink)
+	}
 
 	if ms.ManifestID != yml.ID() {
 		return fmt.Errorf("sous does not support changing source location, please use sous init")
