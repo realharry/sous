@@ -47,7 +47,7 @@ func (ms *ManifestSet) Do() error {
 	}
 
 	if len(listOfKeys) > 0 {
-		messages.ReportLogFieldsMessageToConsole(fmt.Sprintf("The following environment variables have been set, please consider removing since the sous manifest is not secure. %s", listOfKeys), logging.InformationLevel, ms.LogSink)
+		messages.ReportLogFieldsMessageToConsole(fmt.Sprintf("\nThe following environment variables have been set, please consider removing since the sous manifest is not secure. %s", listOfKeys), logging.InformationLevel, ms.LogSink)
 	}
 
 	if ms.ManifestID != yml.ID() {

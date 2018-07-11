@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/)
 with respect to its command line interface and HTTP interface
 
+
+
+## [Unreleased](//github.com/opentable/sous/compare/0.5.111...master)
+### Changed
+* Client: warn user if manifest environment variables contains secrets that
+  manifest is not secure and consider removing.
+
+
 ## [0.5.112](//github.com/opentable/sous/compare/0.5.111...0.5.112)
 ### Changed
 * Client: when receiving bad content type print the HTTP status code and
