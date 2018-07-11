@@ -484,6 +484,10 @@ postgres-update-schema: postgres-start
 postgres-clean: postgres-stop
 	$(DELETE_POSTGRES_DATA)
 
+.PHONY: zk-connect
+zk-connect:
+	docker run --net=host -it --rm  zookeeper zkCli.sh
+
 .PHONY: local-server
 local-server:
 	@if [ -z "$(EMULATE_CLUSTER)" ]; then echo "Please set EMULATE_CLUSTER=<cluster-name>"; exit 1; fi
