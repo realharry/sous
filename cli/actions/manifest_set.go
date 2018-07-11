@@ -46,8 +46,10 @@ func (ms *ManifestSet) Do() error {
 		}
 	}
 
-	if len(listOfKeys) > 0 {
-		messages.ReportLogFieldsMessageToConsole(fmt.Sprintf("\nThe following environment variables have been set, please consider removing since the sous manifest is not secure. %s", listOfKeys), logging.InformationLevel, ms.LogSink)
+	badEnv := getBadKeys(yml, []string{"password", "secret"})
+
+	if len(badEnv) > 0 {
+		messages.ReportLogFieldsMessageToConsole(fmt.Sprintf("\n\nWarning:\n  The following environment variables have been set, please consider removing since the sous manifest is not secure. %s", badEnv), logging.InformationLevel, ms.LogSink)
 	}
 
 	if ms.ManifestID != yml.ID() {
@@ -60,4 +62,18 @@ func (ms *ManifestSet) Do() error {
 	}
 
 	return nil
+}
+
+func getBadKeys(manifest sous.Manifest, check []string) []string {
+	listOfKeys := []string{}
+	for _, deploySpec := range manifest.Deployments {
+		for key := range deploySpec.Env {
+			for _, bad := range check {
+				if strings.Contains(strings.ToLower(key), bad) {
+					listOfKeys = append(listOfKeys, key)
+				}
+			}
+		}
+	}
+	return listOfKeys
 }
