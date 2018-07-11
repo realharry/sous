@@ -8,7 +8,7 @@ with respect to its command line interface and HTTP interface
 
 
 
-## [Unreleased](//github.com/opentable/sous/compare/0.5.111...master)
+## [Unreleased](//github.com/opentable/sous/compare/0.5.112...master)
 ### Changed
 * Client: warn user if manifest environment variables contains secrets that
   manifest is not secure and consider removing.
