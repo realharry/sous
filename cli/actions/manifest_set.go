@@ -37,17 +37,7 @@ func (ms *ManifestSet) Do() error {
 
 	messages.ReportLogFieldsMessage("Manifest in Execute", logging.ExtraDebug1Level, ms.LogSink, yml)
 
-	listOfKeys := []string{}
-	for _, deploySpec := range yml.Deployments {
-		for key := range deploySpec.Env {
-			if strings.Contains(strings.ToLower(key), "password") || strings.Contains(strings.ToLower(key), "secret") {
-				listOfKeys = append(listOfKeys, key)
-			}
-		}
-	}
-
 	badEnv := getBadKeys(yml, []string{"password", "secret"})
-
 	if len(badEnv) > 0 {
 		messages.ReportLogFieldsMessageToConsole(fmt.Sprintf("\n\nWarning:\n  The following environment variables have been set, please consider removing since the sous manifest is not secure. %s", badEnv), logging.InformationLevel, ms.LogSink)
 	}
