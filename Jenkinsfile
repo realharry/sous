@@ -43,7 +43,7 @@ cd $PWD/godir/src/github.com/opentable/sous
 echo $GOPATH
 
 echo "Running Tests"
-VERBOSE=1 TEAMCITY=1 make test-unit
+make test-unit
 
 echo "Generate out file"
 go test -covermode=count -coverprofile=count.out `make export-SOUS_PACKAGES_WITH_TESTS`
@@ -60,8 +60,21 @@ cp coverage.html ./coverage
 					steps {
             echo "smoke test step"
             sh '''#!/usr/bin/env bash
-            docker inspect $HOSTNAME
-            make test-smoke
+echo $PATH
+PATH=$PATH:/usr/local/go/bin export PATH
+echo $PATH
+
+echo "Setting up GOPATH"
+
+mkdir -p godir/src/github.com/opentable
+ln -s $PWD ./godir/src/github.com/opentable/sous
+export GOPATH=$GOPATH:$PWD/godir
+cd $PWD/godir/src/github.com/opentable/sous
+echo $GOPATH
+
+echo "Running Tests"
+make test-smoke
+
             '''
           }
         }
@@ -70,7 +83,20 @@ cp coverage.html ./coverage
           steps {
             echo "integration test"
             sh '''#!/usr/bin/env bash
-            make test-integration
+echo $PATH
+PATH=$PATH:/usr/local/go/bin export PATH
+echo $PATH
+
+echo "Setting up GOPATH"
+
+mkdir -p godir/src/github.com/opentable
+ln -s $PWD ./godir/src/github.com/opentable/sous
+export GOPATH=$GOPATH:$PWD/godir
+cd $PWD/godir/src/github.com/opentable/sous
+echo $GOPATH
+
+echo "Running Tests"
+make test-integration
             '''
           }
         }
