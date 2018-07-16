@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 pipeline {
-  agent { label 'mesos-sous' }
+  agent { label 'mesos-uswest2' }
   options {
     // Version 3
 		// Set to 1 day to allow people to input whether they want to go to Prod on the Master branch build/deploys
@@ -26,7 +26,7 @@ pipeline {
     stage('Test'){
       parallel {
         stage('Unit') {
-  				agent { label 'mesos-sous' }
+  				agent { label 'mesos-uswest2' }
           steps {
             echo "unit test step"
             sh '''#!/usr/bin/env bash
@@ -56,7 +56,7 @@ cp coverage.html ./coverage
           }
         }
         stage('Smoke') {
-   				agent { label 'mesos-sous' }
+   				agent { label 'mesos-uswest2' }
 					steps {
             echo "smoke test step"
             sh '''#!/usr/bin/env bash
@@ -79,7 +79,7 @@ make test-smoke
           }
         }
         stage('Integration') {
-   				agent { label 'mesos-sous' }
+   				agent { label 'mesos-uswest2' }
           steps {
             echo "integration test"
             sh '''#!/usr/bin/env bash
@@ -121,7 +121,7 @@ make test-integration
       }
       parallel {
         stage('Deploy ci-sf') {
-  				agent { label 'mesos-sous' }
+  				agent { label 'mesos-uswest2' }
           options {
 						timeout(time: 5, unit: 'MINUTES')
 					}
@@ -138,7 +138,7 @@ make test-integration
           }
         }
         stage('Deploy pp-sf') {
-   				agent { label 'mesos-sous' }
+   				agent { label 'mesos-uswest2' }
           options {
 						timeout(time: 5, unit: 'MINUTES')
 					}
@@ -155,7 +155,7 @@ make test-integration
           }
         }
         stage('Deploy ci-uswest2') {
-   				agent { label 'mesos-sous' }
+   				agent { label 'mesos-uswest2' }
 					options {
 						timeout(time: 5, unit: 'MINUTES')
 					}
@@ -172,7 +172,7 @@ make test-integration
           }
         }
         stage('Deploy pp-uswest2') {
-   				agent { label 'mesos-sous' }
+   				agent { label 'mesos-uswest2' }
  					options {
 						timeout(time: 5, unit: 'MINUTES')
 					}
