@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -25,7 +26,7 @@ import (
 // via the same go test invocation.
 var timeGoTestInvoked = time.Now().Format(time.RFC3339)
 
-func getEnvDesc(t *testing.T) desc.EnvDesc {
+func getEnvDesc() desc.EnvDesc {
 	descPath := os.Getenv("SOUS_QA_DESC")
 	if descPath == "" {
 		panic("SOUS_QA_DESC is unset! See sous_qa_setup.")
@@ -36,22 +37,22 @@ func getEnvDesc(t *testing.T) desc.EnvDesc {
 	}
 	var envDesc desc.EnvDesc
 	if err := json.NewDecoder(descReader).Decode(&envDesc); err != nil {
-		t.Fatalf("setup failed to decode %q: %s", descPath, err)
+		log.Panicf("setup failed to decode %q: %s", descPath, err)
 	}
 	return envDesc
 }
 
-func getSousBin(t *testing.T) string {
+func mustGetSousBin() string {
 	sousBin := os.Getenv("SMOKE_TEST_BINARY")
 	if sousBin != "" {
-		t.Logf("Using sous binary %q (from $SMOKE_TEST_BINARY)", sousBin)
+		log.Printf("Using sous binary %q (from $SMOKE_TEST_BINARY)", sousBin)
 		return sousBin
 	}
 	sousBin, err := exec.LookPath("sous")
 	if err != nil {
-		t.Fatalf("sous not found in path")
+		log.Panicf("sous not found in path and $SMOKE_TEST_BINARY not set")
 	}
-	t.Logf("Using sous binary %q (from $PATH)", sousBin)
+	log.Printf("Using sous binary %q (from $PATH)", sousBin)
 	return sousBin
 }
 
@@ -181,7 +182,7 @@ func getDataDir(t *testing.T) string {
 		t.Fatalf("Test data dir already exists and is not empty: %q", baseDir)
 	}
 
-	t.Logf("Writing test data to %q (from %s)", baseDir, from)
+	log.Printf("Test data in %q (from %s)", baseDir, from)
 	if err := os.MkdirAll(baseDir, 0777); err != nil {
 		t.Fatalf("Failed to create smoke test data dir %q: %s", baseDir, err)
 	}
@@ -270,8 +271,7 @@ func closeFiles(t *testing.T, fs ...*os.File) {
 // range min-max. Note that it does not guarantee they are still free by the
 // time you come to bind to them, but makes that more likely by binding and then
 // unbinding from them.
-func freePortAddrs(t *testing.T, ip string, n, min, max int) []string {
-	t.Helper()
+func freePortAddrs(ip string, n, min, max int) []string {
 	ports := make(map[int]net.Listener, n)
 	addrs := make([]string, n)
 	// First bind to all the ports...
@@ -292,13 +292,13 @@ NEXT_PORT:
 			ports[port] = listener
 			continue NEXT_PORT
 		}
-		t.Fatalf("Unable to find a free port.")
+		log.Panicf("Unable to find a free port.")
 	}
 	// Now release them all. It's now a race to get our desired things
 	// listening on these addresses.
 	for _, l := range ports {
 		if err := l.Close(); err != nil {
-			t.Fatal(err)
+			log.Panic(err)
 		}
 	}
 	return addrs

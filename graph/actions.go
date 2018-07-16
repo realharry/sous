@@ -115,6 +115,64 @@ func (di *SousGraph) GetUpdate(dff config.DeployFilterFlags, otpl config.OTPLFla
 	}, nil
 }
 
+// ArtifactOpts are options for Add Artifacts
+type ArtifactOpts struct {
+	SourceID    config.SourceIDFlags
+	DockerImage string
+}
+
+//GetGetArtifact will return artifact for cli add artifact
+func (di *SousGraph) GetGetArtifact(opts ArtifactOpts) (actions.Action, error) {
+	di.guardedAdd("SourceIDFlags", &opts.SourceID)
+	scoop := struct {
+		LogSink    LogSink
+		User       sous.User
+		LocalShell LocalWorkDirShell
+		Config     LocalSousConfig
+		HTTP       *ClusterSpecificHTTPClient
+	}{}
+	if err := di.Inject(&scoop); err != nil {
+		return nil, err
+	}
+	return &actions.GetArtifact{
+
+		LogSink:    scoop.LogSink.LogSink.Child("get-artifact"),
+		User:       scoop.User,
+		Config:     scoop.Config.Config,
+		LocalShell: scoop.LocalShell,
+		HTTPClient: scoop.HTTP,
+		Repo:       opts.SourceID.Repo,
+		Offset:     opts.SourceID.Offset,
+		Tag:        opts.SourceID.Tag, //might need to switch to version and seperate concept of tag and semv
+	}, nil
+}
+
+//GetAddArtifact will return artifact for cli add artifact
+func (di *SousGraph) GetAddArtifact(opts ArtifactOpts) (actions.Action, error) {
+	di.guardedAdd("SourceIDFlags", &opts.SourceID)
+	scoop := struct {
+		Inserter   sous.ClientInserter
+		LogSink    LogSink
+		User       sous.User
+		LocalShell LocalWorkDirShell
+		Config     LocalSousConfig
+	}{}
+	if err := di.Inject(&scoop); err != nil {
+		return nil, err
+	}
+	return &actions.AddArtifact{
+		LogSink:     scoop.LogSink.LogSink.Child("add-artifact"),
+		User:        scoop.User,
+		Config:      scoop.Config.Config,
+		LocalShell:  scoop.LocalShell,
+		Inserter:    scoop.Inserter,
+		Repo:        opts.SourceID.Repo,
+		Offset:      opts.SourceID.Offset,
+		Tag:         opts.SourceID.Tag,
+		DockerImage: opts.DockerImage,
+	}, nil
+}
+
 // DeployActionOpts are options for GetDeploy.
 type DeployActionOpts struct {
 	DFF                              config.DeployFilterFlags

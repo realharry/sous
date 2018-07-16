@@ -28,8 +28,11 @@ type TestClient struct {
 	ConfigDir string
 	LogDir    string
 	// Dir is the working directory.
-	Dir           string
-	ClusterSuffix string
+	Dir string
+	// Config is set after calling Configure()
+	Config config.Config
+	// Fixture is the test fixture this client belongs to.
+	Fixture *TestFixture
 }
 
 type sousFlags struct {
@@ -39,6 +42,59 @@ type sousFlags struct {
 	repo    string
 	offset  string
 	tag     string
+}
+
+// ManifestIDFlags returns a derived set of flags only keeping those that play a
+// part in identifying a manifest.
+func (f *sousFlags) ManifestIDFlags() *sousFlags {
+	if f == nil {
+		return nil
+	}
+	return &sousFlags{
+		repo:   f.repo,
+		offset: f.offset,
+		flavor: f.flavor,
+	}
+}
+
+// ManifestIDFlags returns a derived set of flags only keeping those that play a
+// part in identifying a deployment.
+func (f *sousFlags) DeploymentIDFlags() *sousFlags {
+	if f == nil {
+		return nil
+	}
+	didFlags := f.ManifestIDFlags()
+	didFlags.cluster = f.cluster
+	return didFlags
+}
+
+func (f *sousFlags) SousDeployFlags() *sousFlags {
+	if f == nil {
+		return nil
+	}
+	deployFlags := f.DeploymentIDFlags()
+	deployFlags.tag = f.tag
+	return deployFlags
+}
+
+// SousInitFlags returns a derived set of flags only keeping those that play a
+// part in the 'sous init' command.
+func (f *sousFlags) SousInitFlags() *sousFlags {
+	if f == nil {
+		return nil
+	}
+	initFlags := f.ManifestIDFlags()
+	initFlags.kind = f.kind
+	return initFlags
+}
+
+func (f *sousFlags) SourceIDFlags() *sousFlags {
+	if f == nil {
+		return nil
+	}
+	sidFlags := f.ManifestIDFlags()
+	sidFlags.tag = f.tag
+	return sidFlags
 }
 
 func (f *sousFlags) Args() []string {
@@ -67,13 +123,14 @@ func (f *sousFlags) Args() []string {
 	return out
 }
 
-func makeClient(baseDir, sousBin string) *TestClient {
+func makeClient(fixture *TestFixture, baseDir, sousBin string) *TestClient {
 	baseDir = path.Join(baseDir, "client1")
 	return &TestClient{
 		BaseDir:   baseDir,
 		BinPath:   sousBin,
 		ConfigDir: path.Join(baseDir, "config"),
 		LogDir:    path.Join(baseDir, "logs"),
+		Fixture:   fixture,
 	}
 }
 
@@ -112,6 +169,7 @@ func (c *TestClient) Configure(server, dockerReg, userEmail string) error {
 	if err := ioutil.WriteFile(path.Join(c.ConfigDir, "config.yaml"), y, os.ModePerm); err != nil {
 		return err
 	}
+	c.Config = conf
 	return nil
 }
 
@@ -124,13 +182,14 @@ func allArgs(subcmd string, f *sousFlags, args []string) []string {
 	return allArgs
 }
 
-func insertClusterSuffix(args []string, suffix string) []string {
+func (c *TestClient) insertClusterSuffix(t *testing.T, args []string) []string {
+	t.Helper()
 	for i, s := range args {
 		if s == "-cluster" && len(args) > i+1 {
-			args[i+1] = args[i+1] + suffix
+			args[i+1] = c.Fixture.IsolatedClusterName(args[i+1])
 		}
 		if s == "-tag" && len(args) > i+1 {
-			args[i+1] = args[i+1] + "-" + strings.Replace(suffix, "_", "-", -1)
+			args[i+1] = c.Fixture.IsolatedVersionTag(t, args[i+1])
 		}
 	}
 	return args
@@ -138,8 +197,8 @@ func insertClusterSuffix(args []string, suffix string) []string {
 
 func (c *TestClient) Cmd(t *testing.T, subcmd string, f *sousFlags, args ...string) (*exec.Cmd, context.CancelFunc) {
 	t.Helper()
-	args = insertClusterSuffix(args, c.ClusterSuffix)
-	cmd, cancel := mkCMD(c.Dir, c.BinPath, allArgs(subcmd, f, args)...)
+	args = c.insertClusterSuffix(t, allArgs(subcmd, f, args))
+	cmd, cancel := mkCMD(c.Dir, c.BinPath, args...)
 	cmd.Env = append(cmd.Env, fmt.Sprintf("SOUS_CONFIG_DIR=%s", c.ConfigDir))
 	return cmd, cancel
 }
@@ -202,23 +261,35 @@ func (c *TestClient) Run(t *testing.T, subcmd string, f *sousFlags, args ...stri
 func (c *TestClient) ConfigureCommand(t *testing.T, subcmd string, f *sousFlags, args ...string) *CmdWithHooks {
 	t.Helper()
 	cmd, cancel := c.Cmd(t, subcmd, f, args...)
-	stdout, stderr := prefixWithTestName(t, "client1")
 
 	qArgs := quotedArgs(args)
+
 	outFile, errFile, combinedFile :=
 		openFileAppendOnly(t, c.LogDir, "stdout"),
 		openFileAppendOnly(t, c.LogDir, "stderr"),
 		openFileAppendOnly(t, c.LogDir, "combined")
+
 	allFiles := io.MultiWriter(outFile, errFile, combinedFile)
 
 	executed := newExecutedCMD(subcmd, qArgs)
 
-	cmd.Stdout = io.MultiWriter(stdout, outFile, combinedFile, executed.Stdout, executed.Combined)
-	cmd.Stderr = io.MultiWriter(stderr, errFile, combinedFile, executed.Stderr, executed.Combined)
+	stdoutWriters := []io.Writer{outFile, combinedFile, executed.Stdout, executed.Combined}
+	stderrWriters := []io.Writer{errFile, combinedFile, executed.Stderr, executed.Combined}
+
+	clientName := "client1"
+
+	if !quiet() {
+		stdout, stderr := prefixWithTestName(t, clientName)
+		stdoutWriters = append(stdoutWriters, stdout)
+		stderrWriters = append(stderrWriters, stderr)
+	}
+
+	cmd.Stdout = io.MultiWriter(stdoutWriters...)
+	cmd.Stderr = io.MultiWriter(stderrWriters...)
 
 	preRun := func() {
 		prettyCmd := fmt.Sprintf("$ sous %s\n", strings.Join(allArgs(subcmd, f, qArgs), " "))
-		fmt.Fprintf(os.Stderr, "==> %s", prettyCmd)
+		fmt.Fprintf(os.Stderr, "%s:%s:command > %s\n", t.Name(), clientName, prettyCmd)
 		relPath := mustGetRelPath(t, c.BaseDir, cmd.Dir)
 		fmt.Fprintf(allFiles, "%s %s", relPath, prettyCmd)
 	}
@@ -283,14 +354,18 @@ func (c *TestClient) MustFail(t *testing.T, subcmd string, f *sousFlags, args ..
 	}
 }
 
-func (c *TestClient) TransformManifest(t *testing.T, getSetFlags *sousFlags, f func(m sous.Manifest) sous.Manifest) {
+// TransformManifest applies each of transforms in order to the retrieved
+// manifest, then calls 'sous manifest set' to apply them. Any failure is fatal.
+func (c *TestClient) TransformManifest(t *testing.T, getSetFlags *sousFlags, transforms ...ManifestTransform) {
 	t.Helper()
 	manifest := c.MustRun(t, "manifest get", getSetFlags)
 	var m sous.Manifest
 	if err := yaml.Unmarshal([]byte(manifest), &m); err != nil {
 		t.Fatalf("manifest get returned invalid YAML: %s\nInvalid YAML was:\n%s", err, manifest)
 	}
-	m = f(m)
+	for _, f := range transforms {
+		m = f(m)
+	}
 	manifestBytes, err := yaml.Marshal(m)
 	if err != nil {
 		t.Fatalf("failed to marshal updated manifest: %s\nInvalid manifest was:\n% #v", err, m)
@@ -303,9 +378,9 @@ func (c *TestClient) TransformManifest(t *testing.T, getSetFlags *sousFlags, f f
 	}
 }
 
-func (c *TestClient) SetSingularityRequestID(t *testing.T, getSetFlags *sousFlags, clusterName, singReqID string) {
-	c.TransformManifest(t, nil, func(m sous.Manifest) sous.Manifest {
-		clusterName := clusterName + c.ClusterSuffix
+func (c *TestClient) setSingularityRequestID(t *testing.T, clusterName, singReqID string) ManifestTransform {
+	return func(m sous.Manifest) sous.Manifest {
+		clusterName := c.Fixture.IsolatedClusterName(clusterName)
 		d, ok := m.Deployments[clusterName]
 		if !ok {
 			t.Fatalf("no deployment for %q", clusterName)
@@ -316,5 +391,5 @@ func (c *TestClient) SetSingularityRequestID(t *testing.T, getSetFlags *sousFlag
 		m.Deployments[clusterName] = d
 		m.Deployments = setMemAndCPUForAll(m.Deployments)
 		return m
-	})
+	}
 }

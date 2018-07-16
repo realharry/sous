@@ -71,6 +71,10 @@ func (b *Builder) ApplyMetadata(br *sous.BuildResult) error {
 // Register registers the build artifact to the the registry
 func (b *Builder) Register(br *sous.BuildResult) error {
 	for _, prod := range br.Products {
+		if prod.Advisories.Contains(sous.IsBuilder) {
+			messages.ReportLogFieldsMessage("not pushing builder image", logging.DebugLevel, b.log, prod)
+			continue
+		}
 		err := b.pushToRegistry(prod)
 		if err != nil {
 			return err
@@ -118,7 +122,7 @@ func (b *Builder) metadataDockerfile(bp *sous.BuildProduct) io.Reader {
 	}{
 		bp.ID,
 		Labels(sv, bp.RevID),
-		bp.Advisories,
+		bp.Advisories.Strings(),
 	})
 	return &bf
 }
@@ -135,10 +139,14 @@ func (b *Builder) pushToRegistry(bp *sous.BuildProduct) error {
 	// Thus, this arcane incantation.
 	// Oh, and the Digest is never computed until `docker push` happens.
 	output, err := b.SourceShell.Stdout("docker", "inspect", "--format='{{index .RepoDigests 0}}'", bp.VersionName)
-	if err == nil {
+	if err != nil {
 		return err
 	}
-	bp.DigestName = strings.Trim(output, " \n\t\r")
+	bp.DigestName = strings.Replace(strings.Trim(output, " \n\t\r"), "'", "", -1)
+
+	logging.DebugConsole(b.log, fmt.Sprintf("push to registry versionName: %s, revisionName: %s, digest: %s", bp.VersionName,
+		bp.RevisionName, bp.DigestName), bp)
+
 	return nil
 }
 

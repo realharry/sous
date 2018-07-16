@@ -43,8 +43,8 @@ func TestHTTPNameInserter(t *testing.T) {
 			t.Errorf("Path should be '/server' but was: %s", path)
 		}
 		rw.Header().Set("Content-Type", "application/json")
-		sdata := serverListData{
-			Servers: []server{{
+		sdata := ServerListData{
+			Servers: []Server{{
 				ClusterName: "test",
 				URL:         srv.URL,
 			}},

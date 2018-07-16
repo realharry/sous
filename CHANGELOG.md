@@ -6,11 +6,35 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/)
 with respect to its command line interface and HTTP interface
 
-## [Unreleased](//github.com/opentable/sous/compare/0.5.104...master)
-## Added
+## [0.5.112](//github.com/opentable/sous/compare/0.5.111...0.5.112)
+### Changed
+* Client: when receiving bad content type print the HTTP status code and
+  text along with that error message.
+
+## [0.5.111](//github.com/opentable/sous/compare/0.5.110...0.5.111)
+### Fixed
+* Client: builds using split container strategy were broken due to unique
+  constraint violation when builder image was pushed using same SourceID as
+  the runnable image. We no longer push the builder image to avoid this
+  conflict. In future we may reinstate pushing builders if there is a use case
+  for it.
+
+## [0.5.110](//github.com/opentable/sous/compare/0.5.109...0.5.110)
+### Fixed
+* Both: Update how server errors get passed to client, if not json make more
+  readable.
+
+### Added
+* Client: 'sous artifact add' command.
+* Server: GET /artifact handler.
+
+## [0.5.109](//github.com/opentable/sous/compare/0.5.104...0.5.109)
+### Added
 * Singularity request ID is now configurable per-deployment in the manifest.
   Changing SingularityRequestID results in the next deployment being done to
-  the new SingularityRequestID, and the old singularity request being deleted.
+  the new SingularityRequestID, and the old request being orphaned, requiring
+  manual cleanup.
+* Client: New command to add artifact image to sous.
 
 ## [0.5.105](//github.com/opentable/sous/compare/0.5.102...0.5.105)
 ### Fixed

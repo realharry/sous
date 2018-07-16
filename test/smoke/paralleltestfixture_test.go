@@ -4,13 +4,13 @@ package smoke
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
+	"syscall"
 	"testing"
-
-	sous "github.com/opentable/sous/lib"
 )
 
 type (
@@ -21,12 +21,8 @@ type (
 		NumFreeAddrs int
 	}
 
-	fixtureConfig struct {
-		dbPrimary  bool
-		startState *sous.State
-	}
-
 	ParallelTestFixture struct {
+		T                  *testing.T
 		NextAddr           func() string
 		testNames          map[string]struct{}
 		testNamesMu        sync.RWMutex
@@ -37,20 +33,28 @@ type (
 		testNamesFailed    map[string]struct{}
 		testNamesFailedMu  sync.Mutex
 	}
+
+	ParallelTestFixtureSet struct {
+		NextAddr func() string
+		mu       sync.Mutex
+		fixtures map[string]*ParallelTestFixture
+	}
 )
 
-func resetSingularity(t *testing.T) {
-	envDesc := getEnvDesc(t)
-	singularity := NewSingularity(envDesc.SingularityURL())
-	singularity.Reset(t)
+var stdout = os.NewFile(uintptr(syscall.Stdout), "/dev/stdout")
+var stderr = os.NewFile(uintptr(syscall.Stdout), "/dev/stderr")
+
+func alwaysPrintf(format string, a ...interface{}) {
+	fmt.Fprintf(stderr, format+"\n", a...)
 }
 
-func newParallelTestFixture(t *testing.T, opts PTFOpts) *ParallelTestFixture {
-	t.Helper()
-	resetSingularity(t)
-	stopPIDs(t)
+func newParallelTestFixtureSet(opts PTFOpts) *ParallelTestFixtureSet {
+	resetSingularity()
+	if err := stopPIDs(); err != nil {
+		panic(err)
+	}
 	numFreeAddrs := opts.NumFreeAddrs
-	freeAddrs := freePortAddrs(t, "127.0.0.1", numFreeAddrs, 6601, 9000)
+	freeAddrs := freePortAddrs("127.0.0.1", numFreeAddrs, 6601, 9000)
 	var nextAddrIndex int64
 	nextAddr := func() string {
 		i := atomic.AddInt64(&nextAddrIndex, 1)
@@ -59,20 +63,35 @@ func newParallelTestFixture(t *testing.T, opts PTFOpts) *ParallelTestFixture {
 		}
 		return freeAddrs[i]
 	}
-	return &ParallelTestFixture{
-		NextAddr:         nextAddr,
+	return &ParallelTestFixtureSet{
+		NextAddr: nextAddr,
+		fixtures: map[string]*ParallelTestFixture{},
+	}
+}
+
+func resetSingularity() {
+	envDesc := getEnvDesc()
+	singularity := NewSingularity(envDesc.SingularityURL())
+	singularity.Reset()
+}
+
+func (pfs *ParallelTestFixtureSet) newParallelTestFixture(t *testing.T) *ParallelTestFixture {
+	alwaysPrintf("Registering %s", t.Name())
+	t.Helper()
+	t.Parallel()
+	alwaysPrintf("Running     %s", t.Name())
+	pf := &ParallelTestFixture{
+		T:                t,
+		NextAddr:         pfs.NextAddr,
 		testNames:        map[string]struct{}{},
 		testNamesPassed:  map[string]struct{}{},
 		testNamesSkipped: map[string]struct{}{},
 		testNamesFailed:  map[string]struct{}{},
 	}
-}
-
-func (fcfg fixtureConfig) Desc() string {
-	if fcfg.dbPrimary {
-		return "DB"
-	}
-	return "GIT"
+	pfs.mu.Lock()
+	defer pfs.mu.Unlock()
+	pfs.fixtures[t.Name()] = pf
+	return pf
 }
 
 func (pf *ParallelTestFixture) recordTestStarted(t *testing.T) {
@@ -86,28 +105,60 @@ func (pf *ParallelTestFixture) recordTestStarted(t *testing.T) {
 	pf.testNames[name] = struct{}{}
 }
 
+// PTest is a test to run in parallel.
+type PTest struct {
+	Name string
+	Test func(*testing.T, *TestFixture)
+}
+
+func (pf *ParallelTestFixture) RunMatrix(m []fixtureConfig, tests ...PTest) {
+	for _, c := range m {
+		pf.T.Run(c.Desc(), func(t *testing.T) {
+			c := c
+			t.Parallel()
+			for _, pt := range tests {
+				pt := pt
+				t.Run(pt.Name, func(t *testing.T) {
+					f := pf.NewIsolatedFixture(t, c)
+					defer f.ReportStatus(t)
+					pt.Test(t, f)
+				})
+			}
+		})
+	}
+}
+
 func (pf *ParallelTestFixture) recordTestStatus(t *testing.T) {
 	t.Helper()
 	name := t.Name()
 	pf.testNamesMu.RLock()
 	_, started := pf.testNames[name]
 	pf.testNamesMu.RUnlock()
+
+	statusString := "UNKNOWN"
+	status := &statusString
+	defer func() { alwaysPrintf("Finished running %s: %s", name, *status) }()
+
 	if !started {
 		t.Fatalf("test %q reported as finished, but not started", name)
+		*status = "ERROR: Not Started"
 		return
 	}
 	switch {
 	default:
+		*status = "PASSED"
 		pf.testNamesPassedMu.Lock()
 		pf.testNamesPassed[name] = struct{}{}
 		pf.testNamesPassedMu.Unlock()
 		return
 	case t.Skipped():
+		*status = "SKIPPED"
 		pf.testNamesSkippedMu.Lock()
 		pf.testNamesSkipped[name] = struct{}{}
 		pf.testNamesSkippedMu.Unlock()
 		return
 	case t.Failed():
+		*status = "FAILED"
 		pf.testNamesFailedMu.Lock()
 		pf.testNamesFailed[name] = struct{}{}
 		pf.testNamesFailedMu.Unlock()
@@ -115,17 +166,33 @@ func (pf *ParallelTestFixture) recordTestStatus(t *testing.T) {
 	}
 }
 
-func (pf *ParallelTestFixture) PrintSummary(t *testing.T) {
-	total := len(pf.testNames)
-	passed := len(pf.testNamesPassed)
-	skipped := len(pf.testNamesSkipped)
-	failed := len(pf.testNamesFailed)
+func (pfs *ParallelTestFixtureSet) PrintSummary() {
+	var total, passed, skipped, failed, missing int
+	for _, pf := range pfs.fixtures {
+		t, p, s, f, m := pf.PrintSummary()
+		total += t
+		passed += p
+		skipped += s
+		failed += f
+		missing += m
+	}
+	summary := fmt.Sprintf("Summary: %d failed; %d skipped; %d passed; %d missing (total %d)", failed, skipped, passed, missing, total)
+	fmt.Fprintln(os.Stdout, summary)
+}
 
-	summary := fmt.Sprintf("Test summary: %d failed; %d skipped; %d passed (total %d)", failed, skipped, passed, total)
+func (pf *ParallelTestFixture) PrintSummary() (total, passed, skipped, failed, missing int) {
+	t := pf.T
+	t.Helper()
+	total = len(pf.testNames)
+	passed = len(pf.testNamesPassed)
+	skipped = len(pf.testNamesSkipped)
+	failed = len(pf.testNamesFailed)
+
+	summary := fmt.Sprintf("%s summary: %d failed; %d skipped; %d passed (total %d)", t.Name(), failed, skipped, passed, total)
 	t.Log(summary)
-	fmt.Fprint(os.Stdout, summary)
+	fmt.Fprintln(os.Stdout, summary)
 
-	missing := total - (passed + failed + skipped)
+	missing = total - (passed + failed + skipped)
 	if missing != 0 {
 		for t := range pf.testNamesPassed {
 			delete(pf.testNames, t)
@@ -140,12 +207,14 @@ func (pf *ParallelTestFixture) PrintSummary(t *testing.T) {
 		for t := range pf.testNames {
 			missingTests = append(missingTests, t)
 		}
-		t.Fatalf("Some tests did not report status: %s", strings.Join(missingTests, ", "))
+		log.Panicf("Some tests did not report status: %s", strings.Join(missingTests, ", "))
 	}
+	return total, passed, skipped, failed, missing
 }
 
-func (pf *ParallelTestFixture) NewIsolatedFixture(t *testing.T, fcfg fixtureConfig) TestFixture {
+func (pf *ParallelTestFixture) NewIsolatedFixture(t *testing.T, fcfg fixtureConfig) *TestFixture {
 	t.Helper()
 	pf.recordTestStarted(t)
-	return newTestFixture(t, pf, pf.NextAddr, fcfg)
+	envDesc := getEnvDesc()
+	return newTestFixture(t, envDesc, pf, pf.NextAddr, fcfg)
 }
