@@ -73,6 +73,12 @@ cd $PWD/godir/src/github.com/opentable/sous
 echo $GOPATH
 
 echo "Running Tests"
+
+echo "Setting up git identity for test"
+git config --global user.email "sous-internal@opentable.onmicrosoft.com"
+git config --global user.name "Teamcity TestRun"
+
+
 make test-smoke
 
             '''
