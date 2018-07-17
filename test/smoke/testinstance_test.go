@@ -128,7 +128,7 @@ func (i *Instance) Start(t *testing.T, binPath string) error {
 		t.Fatalf("setting up 'sous config': %s", err)
 	}
 	if err := configCMD.Wait(); err != nil {
-		t.Fatalf("running 'sous config': %s", err)
+		t.Fatalf("running 'sous config': %s binPath: %s", err, binPath)
 	}
 
 	serverDebug := os.Getenv("SOUS_SERVER_DEBUG") == "true"
