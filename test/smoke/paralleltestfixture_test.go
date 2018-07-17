@@ -49,7 +49,7 @@ func newParallelTestFixtureSet(opts PTFOpts) *ParallelTestFixtureSet {
 		panic(err)
 	}
 	numFreeAddrs := opts.NumFreeAddrs
-	freeAddrs := freePortAddrs("127.0.0.1", numFreeAddrs, 6601, 9000)
+	freeAddrs := freePortAddrs("127.0.0.1", numFreeAddrs, 49152, 65535)
 	var nextAddrIndex int64
 	nextAddr := func() string {
 		i := atomic.AddInt64(&nextAddrIndex, 1)
@@ -118,6 +118,7 @@ func (pf *ParallelTestFixture) RunMatrix(tests ...PTest) {
 				t.Run(pt.Name, func(t *testing.T) {
 					f := pf.NewIsolatedFixture(t, c)
 					defer f.ReportStatus(t)
+					defer f.Teardown(t)
 					pt.Test(t, f)
 				})
 			}
@@ -204,7 +205,7 @@ func (pf *ParallelTestFixture) PrintSummary() (total, passed, skipped, failed, m
 		for t := range pf.testNames {
 			missingTests = append(missingTests, t)
 		}
-		t.Errorf("Some tests did not report status: %s", strings.Join(missingTests, ", "))
+		rtLog("Warning! Some tests did not report status: %s", strings.Join(missingTests, ", "))
 	}
 	return total, passed, skipped, failed, missing
 }

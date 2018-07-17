@@ -393,6 +393,7 @@ test-smoke-all: start-qa-env test-smoke-compiles $(SMOKE_TEST_BINARY) $(SMOKE_TE
 	SOUS_QA_DESC=$(QA_DESC) \
 	DESTROY_SINGULARITY_BETWEEN_SMOKE_TEST_CASES=$(DESTROY_SINGULARITY_BETWEEN_SMOKE_TEST_CASES) \
 	SOUS_TERSE_LOGGING=$(SOUS_TERSE_LOGGING) \
+	QUIET_SMOKE_TEST=$(QUIET_SMOKE_TEST) \
 	go test $(EXTRA_GO_TEST_FLAGS) -timeout $(SMOKE_TEST_TIMEOUT) -tags 'smoke netcgo' -v -count 1 ./test/smoke $(TEST_TEAMCITY)
 
 .PHONY: test-smoke
@@ -402,6 +403,10 @@ test-smoke:
 .PHONY: test-smoke-ls
 test-smoke-ls:
 	@go test -v -tags smoke ./test/smoke -ls -dimensions | grep -E '(^Dimension |^Matrix dimensions|^Test[A-Za-z0-9_]+/)'
+
+.PHONY: test-smoke-quiet
+test-smoke-quiet:
+	QUIET_SMOKE_TEST=YES $(MAKE) test-smoke
 
 .PHONY: docker-is-working
 docker-is-working:
