@@ -2,7 +2,7 @@
 pipeline {
   agent { label 'mesos-qa-uswest2' }
   options {
-    // Version 3
+    // Version 4
 		// Set to 1 day to allow people to input whether they want to go to Prod on the Master branch build/deploys
   	timeout(time: 1, unit: 'DAYS')
   }
@@ -282,6 +282,9 @@ make test-integration
     always {
       echo 'This will always run'
 
+    }
+    success {
+      echo 'This will run only if successful'
       script {
         def notifier = new org.gradiant.jenkins.slack.SlackNotifier()
 
@@ -291,18 +294,18 @@ make test-integration
 
         notifier.notifyResult()
       }
-
-      //slackSend color: 'good', message: 'Message from Jenkins Pipeline'
-      //script {
-      //  def slack = new com.opentable.sous.Slack()
-      //  slack.call(currentBuild.currentResult, '#team-eng-sous-bots')
-      //}
-    }
-    success {
-      echo 'This will run only if successful'
     }
     failure {
       echo 'This will run only if failed'
+      script {
+        def notifier = new org.gradiant.jenkins.slack.SlackNotifier()
+
+        env.SLACK_CHANNEL = '#team-eng-sous-bots, #tech-deploy'
+        env.CHANGE_LIST = 'true'
+        env.NOTIFY_SUCCESS = 'false'
+
+        notifier.notifyResult()
+      }
     }
     unstable {
       echo 'This will run only if the run was marked as unstable'
