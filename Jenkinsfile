@@ -60,6 +60,7 @@ cp coverage.html ./coverage
 					steps {
             echo "smoke test step"
             sh '''#!/usr/bin/env bash
+set -x
 echo $PATH
 PATH=$PATH:/usr/local/go/bin export PATH
 echo $PATH
