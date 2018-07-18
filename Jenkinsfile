@@ -66,13 +66,13 @@ echo $PATH
 
 echo "Setting up GOPATH"
 
-#mkdir -p godir/src/github.com/opentable
-#ln -s $PWD $PWD/godir/src/github.com/opentable/sous
-#export GOPATH=$PWD/godir
-#cd $PWD/godir/src/github.com/opentable/sous
+mkdir -p godir/src/github.com/opentable
+ln -sfn $PWD $PWD/godir/src/github.com/opentable/sous
+export GOPATH=$PWD/godir
+cd $PWD/godir/src/github.com/opentable/sous
 
-#echo $GOPATH
-#echo $PWD
+echo $GOPATH
+echo $PWD
 
 
 echo "Running Tests"
