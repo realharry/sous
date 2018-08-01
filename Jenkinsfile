@@ -15,6 +15,7 @@ pipeline {
           githubNotify context: 'Jenkins/Test/TestSmoke/git/split', description: 'Smoke Git Split Tests', status: 'PENDING'
           githubNotify context: 'Jenkins/Test/TestSmoke/git/simple', description: 'Smoke Git Simple Tests', status: 'PENDING'
           githubNotify context: 'Jenkins/Test/TestOTPL/git/simple', description: 'OTPL Git Simple Tests', status: 'PENDING'
+          githubNotify context: 'Jenkins/Test/Integration', description: 'Integration Tests', status: 'PENDING'
           githubNotify context: 'Jenkins Overall Success', description: 'Pipeline Status', status: 'PENDING'
       }
     }
@@ -282,6 +283,14 @@ pipeline {
                   make test-integration
                   '''
               }
+          }
+          post {
+            success {
+              githubNotify context: 'Jenkins/Test/Integration', description: 'Integration Tests Passed', status: 'SUCCESS'
+            }
+            failure {
+              githubNotify context: 'Jenkins/Test/Integration', description: 'Integration Tests Failed', status: 'FAILURE'
+            }
           }
         }
       }
