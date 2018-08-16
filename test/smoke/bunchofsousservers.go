@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/opentable/sous/config"
@@ -97,38 +98,45 @@ func (c *bunchOfSousServers) configure(t *testing.T, f fixtureConfig) error {
 		host = h
 	}
 
+	var wg sync.WaitGroup
+	wg.Add(len(c.Instances))
 	for n, i := range c.Instances {
-		dbname := sous.DBNameForTest(t, n)
+		n, i := n, i
+		go func() {
+			defer wg.Done()
+			dbname := sous.DBNameForTest(t, n)
 
-		if _, err := sous.SetupDBNamed(t, dbname); err != nil {
-			rtLog("%s:db:%s> create failed: %s", i.ID(), dbname, err)
-			t.Fatalf("create database failed: %s", err)
-		}
-		rtLog("%s:db:%s> created", i.ID(), dbname)
+			if _, err := sous.SetupDBNamed(t, dbname); err != nil {
+				rtLog("%s:db:%s> create failed: %s", i.ID(), dbname, err)
+				t.Fatalf("create database failed: %s", err)
+			}
+			rtLog("%s:db:%s> created", i.ID(), dbname)
 
-		config := &config.Config{
-			StateLocation: i.StateDir,
-			SiblingURLs:   siblingURLs,
-			Database: storage.PostgresConfig{
-				User:   "postgres",
-				DBName: dbname,
-				Host:   host,
-				Port:   dbport,
-			},
-			DatabasePrimary: f.Scenario.dbPrimary,
-			Docker: docker.Config{
-				RegistryHost: f.EnvDesc.RegistryName(),
-			},
-			User: sous.User{
-				Name:  "Sous Server " + i.ClusterName,
-				Email: "sous-" + i.ClusterName + "@example.com",
-			},
-		}
-		config.Logging.Basic.Level = "debug"
-		if err := i.configure(t, f, config, c.RemoteGDMDir); err != nil {
-			return errors.Wrapf(err, "configuring instance %d", i)
-		}
+			config := &config.Config{
+				StateLocation: i.StateDir,
+				SiblingURLs:   siblingURLs,
+				Database: storage.PostgresConfig{
+					User:   "postgres",
+					DBName: dbname,
+					Host:   host,
+					Port:   dbport,
+				},
+				DatabasePrimary: f.Scenario.dbPrimary,
+				Docker: docker.Config{
+					RegistryHost: f.EnvDesc.RegistryName(),
+				},
+				User: sous.User{
+					Name:  "Sous Server " + i.ClusterName,
+					Email: "sous-" + i.ClusterName + "@example.com",
+				},
+			}
+			config.Logging.Basic.Level = "debug"
+			if err := i.configure(t, f, config, c.RemoteGDMDir); err != nil {
+				panic(errors.Wrapf(err, "configuring instance %d", i))
+			}
+		}()
 	}
+	wg.Wait()
 	return nil
 }
 
