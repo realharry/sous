@@ -34,6 +34,10 @@ func versionString(v semv.Version) string {
 	return v.Format(semv.MMPPre)
 }
 
+func versionStringComplete(v semv.Version) string {
+	return v.Format(semv.Complete)
+}
+
 func revisionString(v semv.Version) string {
 	// Lop off the + symbol, not needed when storing revision as a separate field.
 	return v.Format("+")[1:]
@@ -287,7 +291,7 @@ func (nc *NameCache) dbQueryCNameforSourceID(sid sous.SourceID) (cn string, ins 
 		"docker_search_location.repo = $1 and " +
 		"docker_search_location.offset = $2 and " +
 		"docker_search_metadata.version = $3"
-	rows, err := nc.DB.Query(query, sid.Location.Repo, sid.Location.Dir, versionString(sid.Version))
+	rows, err := nc.DB.Query(query, sid.Location.Repo, sid.Location.Dir, versionStringComplete(sid.Version))
 
 	if err != nil {
 		sqlgen.ReportSelect(nc.log, start, "docker_search_metadata", query, 0, err,
