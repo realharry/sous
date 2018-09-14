@@ -68,7 +68,7 @@ func TestRoundTrip(t *testing.T) {
 			in := base + ":" + versionIn
 			err = nc.Insert(sv, buildArtifact(in, dn))
 			assert.NoError(err)
-
+			//
 			// inserts should be idempotent
 			err = nc.Insert(sv, buildArtifact(in, dn))
 			assert.NoError(err)
@@ -460,4 +460,18 @@ func TestMissingName(t *testing.T) {
 	name, _, err := nc.getImageName(sv)
 	assert.Equal("", name)
 	assert.Error(err)
+}
+
+func TestGetArtifactVersion(t *testing.T) {
+
+	dc := docker_registry.NewDummyClient()
+	nc, err := NewNameCache("", dc, logging.SilentLogSet(), sous.SetupDB(t))
+	defer sous.ReleaseDB(t)
+	assert.NoError(err)
+
+	fmt.Println("about to dump the name cache")
+	nc.dump(os.Stdout)
+	fmt.Println("dumped the name cache")
+	//something else
+	assert.Fail(t, "want to fail here to see the output")
 }
