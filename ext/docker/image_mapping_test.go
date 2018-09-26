@@ -467,11 +467,11 @@ func TestGetArtifactVersion(t *testing.T) {
 	dc := docker_registry.NewDummyClient()
 	nc, err := NewNameCache("", dc, logging.SilentLogSet(), sous.SetupDB(t))
 	defer sous.ReleaseDB(t)
-	assert.NoError(err)
+	assert.NoError(t, err)
 
 	fmt.Println("about to dump the name cache")
 	nc.dump(os.Stdout)
 	fmt.Println("dumped the name cache")
 	//something else
-	assert.Fail(t, "want to fail here to see the output")
+	//assert.Fail(t, "want to fail here to see the output")
 }
