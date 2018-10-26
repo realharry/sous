@@ -170,12 +170,18 @@ func TestStateEtags(t *testing.T) {
 		t.Errorf("Got error instead of etag: %v", err)
 	}
 
-	s.Manifests.Add(&sous.Manifest{Source: sous.SourceLocation{Repo: "github.com/opentable/newhotness"}})
+	s.Manifests.Add(&sous.Manifest{
+		Owners: []string{"some owner"},
+		Source: sous.SourceLocation{Repo: "github.com/opentable/newhotness"},
+	})
 	if err := gsm.WriteState(s, testUser); err != nil {
 		t.Errorf("Got unexpect error when writing state: %v", err)
 	}
 
-	s.Manifests.Add(&sous.Manifest{Source: sous.SourceLocation{Repo: "github.com/opentable/supernewextahotness"}})
+	s.Manifests.Add(&sous.Manifest{
+		Owners: []string{"other owner"},
+		Source: sous.SourceLocation{Repo: "github.com/opentable/supernewextahotness"},
+	})
 	if err := gsm.WriteState(s, testUser); err == nil {
 		t.Errorf("Got no error when re-writing state: %v (have to re-Read first)", err)
 	}
@@ -192,7 +198,10 @@ func TestGitPulls(t *testing.T) {
 	expected := exampleState()
 	sameYAML(t, actual, expected)
 
-	expected.Manifests.Add(&sous.Manifest{Source: sous.SourceLocation{Repo: "github.com/opentable/brandnew"}})
+	expected.Manifests.Add(&sous.Manifest{
+		Owners: []string{"some owner"},
+		Source: sous.SourceLocation{Repo: "github.com/opentable/brandnew"},
+	})
 	remote.WriteState(expected, sous.User{})
 	expected, err = remote.ReadState()
 	require.NoError(err)
@@ -212,7 +221,10 @@ func TestGitPushes(t *testing.T) {
 	expected, err := gsm.ReadState()
 	require.NoError(err)
 
-	expected.Manifests.Add(&sous.Manifest{Source: sous.SourceLocation{Repo: "github.com/opentable/brandnew"}})
+	expected.Manifests.Add(&sous.Manifest{
+		Owners: []string{"some owner"},
+		Source: sous.SourceLocation{Repo: "github.com/opentable/brandnew"},
+	})
 	require.NoError(gsm.WriteState(expected, testUser))
 	expected, err = gsm.ReadState()
 	require.NoError(err)
@@ -233,7 +245,10 @@ func TestGitConflicts(t *testing.T) {
 
 	expected := exampleState()
 
-	expected.Manifests.Add(&sous.Manifest{Source: sous.SourceLocation{Repo: "github.com/opentable/brandnew"}})
+	expected.Manifests.Add(&sous.Manifest{
+		Owners: []string{"some owner"},
+		Source: sous.SourceLocation{Repo: "github.com/opentable/brandnew"},
+	})
 	remote.WriteState(expected, sous.User{})
 
 	expected, err = remote.ReadState()
@@ -241,7 +256,10 @@ func TestGitConflicts(t *testing.T) {
 	runScript(t, `git add .
 	git commit -m ""`, `testdata/origin`)
 
-	actual.Manifests.Add(&sous.Manifest{Source: sous.SourceLocation{Repo: "github.com/opentable/newhotness"}})
+	actual.Manifests.Add(&sous.Manifest{
+		Owners: []string{"other owner"},
+		Source: sous.SourceLocation{Repo: "github.com/opentable/newhotness"},
+	})
 
 	actualErr := gsm.WriteState(actual, testUser)
 	assert.NoError(actualErr)
@@ -257,7 +275,7 @@ func TestGitConflicts(t *testing.T) {
 		// when they are read, the flaws library replaces nils with non-nils
 		// for these fields.
 		Kind:        sous.ManifestKindService,
-		Owners:      []string{},
+		Owners:      []string{"other owner"},
 		Deployments: sous.DeploySpecs{},
 	})
 
@@ -274,7 +292,10 @@ func TestGitRemoteDelete(t *testing.T) {
 
 	expected := exampleState()
 
-	expected.Manifests.Add(&sous.Manifest{Source: sous.SourceLocation{Repo: "github.com/opentable/brandnew"}})
+	expected.Manifests.Add(&sous.Manifest{
+		Owners: []string{"some owner"},
+		Source: sous.SourceLocation{Repo: "github.com/opentable/brandnew"},
+	})
 	remote.WriteState(expected, sous.User{})
 
 	_, err = remote.ReadState()
@@ -289,7 +310,10 @@ func TestGitRemoteDelete(t *testing.T) {
 	git commit -am ""`, `testdata/origin`)
 	require.NoError(err)
 
-	actual.Manifests.Add(&sous.Manifest{Source: sous.SourceLocation{Repo: "github.com/opentable/newhotness"}})
+	actual.Manifests.Add(&sous.Manifest{
+		Owners: []string{"some owner"},
+		Source: sous.SourceLocation{Repo: "github.com/opentable/newhotness"},
+	})
 	actualErr := gsm.WriteState(actual, testUser)
 	assert.NoError(actualErr)
 
@@ -307,7 +331,7 @@ func TestGitRemoteDelete(t *testing.T) {
 		// when they are read, the flaws library replaces nils with non-nils
 		// for these fields.
 		Kind:        sous.ManifestKindService,
-		Owners:      []string{},
+		Owners:      []string{"some owner"},
 		Deployments: sous.DeploySpecs{},
 	})
 

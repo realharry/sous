@@ -37,6 +37,7 @@ func TestState_Validate(t *testing.T) {
 	validState := &State{
 		Manifests: NewManifestsFromMap(map[ManifestID]*Manifest{
 			mid: &Manifest{
+				Owners: []string{"owners"},
 				Source: mid.Source,
 				Kind:   ManifestKindService,
 				Deployments: DeploySpecs{

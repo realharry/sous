@@ -41,7 +41,7 @@ func StateFixture(o StateFixtureOpts) *State {
 				Dir:  fmt.Sprintf("dir%d", manifestN),
 			},
 			Flavor: fmt.Sprintf("flavor%d", manifestN),
-			Owners: nil,
+			Owners: []string{"some owner"},
 			Kind:   "http-service",
 		})
 	}

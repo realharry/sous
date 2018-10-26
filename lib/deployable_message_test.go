@@ -48,7 +48,7 @@ func TestDeployableMessage(t *testing.T) {
 		"sous-prior-metadata":                   "{}",
 		"sous-prior-numinstances":               1,
 		"sous-prior-offset":                     "",
-		"sous-prior-owners":                     "",
+		"sous-prior-owners":                     "some owner",
 		"sous-prior-repo":                       "github.com/opentable/example",
 		"sous-prior-resources":                  "{\"cpus\":\"0.100\",\"memory\":\"356\",\"ports\":\"2\"}",
 		"sous-prior-startup-connectdelay":       0,
@@ -76,7 +76,7 @@ func TestDeployableMessage(t *testing.T) {
 		"sous-post-metadata":                   "{}",
 		"sous-post-numinstances":               1,
 		"sous-post-offset":                     "",
-		"sous-post-owners":                     "",
+		"sous-post-owners":                     "some owner",
 		"sous-post-repo":                       "github.com/opentable/example",
 		"sous-post-resources":                  "{\"cpus\":\"0.100\",\"memory\":\"356\",\"ports\":\"2\"}",
 		"sous-post-startup-connectdelay":       0,
@@ -100,6 +100,7 @@ func TestDeployableMessage(t *testing.T) {
 }
 
 func TestDiffMessages_knownpanic(t *testing.T) {
+	var emptyStruct struct{}
 	pair := &DeployablePair{
 		Prior: &Deployable{
 			Status: 0,
@@ -142,7 +143,7 @@ func TestDiffMessages_knownpanic(t *testing.T) {
 					Version: semv.MustParse("0.0.1"),
 				},
 				Flavor: "",
-				Owners: map[string]struct{}{},
+				Owners: OwnerSet{"some owner": emptyStruct},
 				Kind:   "",
 			},
 			BuildArtifact: nil,
@@ -188,7 +189,7 @@ func TestDiffMessages_knownpanic(t *testing.T) {
 					Version: semv.MustParse("0.0.1"),
 				},
 				Flavor: "",
-				Owners: map[string]struct{}{},
+				Owners: OwnerSet{"some owner": emptyStruct},
 				Kind:   "",
 			},
 			BuildArtifact: nil,
@@ -222,7 +223,7 @@ func TestDiffMessages_knownpanic(t *testing.T) {
 		"sous-post-metadata":                   "{\"\":\"\"}",
 		"sous-post-numinstances":               1,
 		"sous-post-offset":                     "",
-		"sous-post-owners":                     "",
+		"sous-post-owners":                     "some owner",
 		"sous-post-repo":                       "github.com/opentable/consumer-service-xyz",
 		"sous-post-resources":                  "{\"cpus\":\"0.1\",\"memory\":\"1024\",\"ports\":\"3\"}",
 		"sous-post-startup-connectdelay":       10,
@@ -247,7 +248,7 @@ func TestDiffMessages_knownpanic(t *testing.T) {
 		"sous-prior-metadata":                   "{\"\":\"\"}",
 		"sous-prior-numinstances":               1,
 		"sous-prior-offset":                     "",
-		"sous-prior-owners":                     "",
+		"sous-prior-owners":                     "some owner",
 		"sous-prior-repo":                       "github.com/opentable/consumer-service-xyz",
 		"sous-prior-resources":                  "{\"cpus\":\"0.1\",\"memory\":\"1024\",\"ports\":\"3\"}",
 		"sous-prior-startup-connectdelay":       10,

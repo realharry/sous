@@ -47,6 +47,7 @@ func TestNewUserSelectedOTPLDeploySpecs(t *testing.T) {
 
 	testcase("detected but ignored so no manifest",
 		&sous.Manifest{
+			Owners: []string{"some", "owners"},
 			Deployments: sous.DeploySpecs{
 				"some-cluster": {},
 			},
@@ -63,6 +64,7 @@ func TestNewUserSelectedOTPLDeploySpecs(t *testing.T) {
 			Deployments: sous.DeploySpecs{
 				"some-cluster": {},
 			},
+			Owners: []string{"some", "owners"},
 		},
 		config.OTPLFlags{UseOTPLDeploy: true},
 		sous.Clusters{
@@ -72,12 +74,13 @@ func TestNewUserSelectedOTPLDeploySpecs(t *testing.T) {
 			Deployments: sous.DeploySpecs{
 				"some-cluster": {},
 			},
-			Owners: []string{},
+			Owners: []string{"some", "owners"},
 		},
 	)
 
 	testcase("detected with flavor and flags say use",
 		&sous.Manifest{
+			Owners: []string{"some", "owners"},
 			Flavor: "neopolitan",
 			Deployments: sous.DeploySpecs{
 				"some-cluster": {},
@@ -92,7 +95,7 @@ func TestNewUserSelectedOTPLDeploySpecs(t *testing.T) {
 			Deployments: sous.DeploySpecs{
 				"some-cluster": {},
 			},
-			Owners: []string{},
+			Owners: []string{"some", "owners"},
 		},
 	)
 }
@@ -125,6 +128,7 @@ func TestNewUserSelectedOTPLDeploySpecs_Errors(t *testing.T) {
 
 	testcase("detected, but no flags set to either use or ignore them",
 		&sous.Manifest{
+			Owners: []string{"some", "owners"},
 			Deployments: sous.DeploySpecs{
 				"some-cluster": {},
 			},
@@ -135,6 +139,7 @@ func TestNewUserSelectedOTPLDeploySpecs_Errors(t *testing.T) {
 
 	testcase("detected with flavor, flags set to use but no flavor specified",
 		&sous.Manifest{
+			Owners: []string{"some", "owners"},
 			Flavor: "chocolate",
 			Deployments: sous.DeploySpecs{
 				"some-cluster": {},
@@ -146,6 +151,7 @@ func TestNewUserSelectedOTPLDeploySpecs_Errors(t *testing.T) {
 
 	testcase("detected with flavor, flags set to use but unknown flavor specified",
 		&sous.Manifest{
+			Owners: []string{"some", "owners"},
 			Flavor: "chocolate",
 			Deployments: sous.DeploySpecs{
 				"some-cluster": {},
@@ -168,7 +174,12 @@ func TestNewTargetManifest_Existing(t *testing.T) {
 	flavor := "some-flavor"
 	mid := sous.ManifestID{Source: sl, Flavor: flavor}
 	tmid := TargetManifestID(mid)
-	m := &sous.Manifest{Source: sl, Flavor: flavor, Kind: sous.ManifestKindService}
+	m := &sous.Manifest{
+		Owners: []string{"some", "owners"},
+		Source: sl,
+		Flavor: flavor,
+		Kind:   sous.ManifestKindService,
+	}
 	s := sous.NewState()
 	s.Manifests.Add(m)
 	sm, _ := sous.NewStateManagerSpyFor(s)
@@ -193,7 +204,12 @@ func TestNewTargetManifest_Existing_withOffset(t *testing.T) {
 	flavor := "some-flavor"
 	mid := sous.ManifestID{Source: sl, Flavor: flavor}
 	tmid := TargetManifestID(mid)
-	m := &sous.Manifest{Source: sl, Flavor: flavor, Kind: sous.ManifestKindService}
+	m := &sous.Manifest{
+		Owners: []string{"some", "owners"},
+		Source: sl,
+		Flavor: flavor,
+		Kind:   sous.ManifestKindService,
+	}
 	s := sous.NewState()
 	s.Manifests.Add(m)
 	sm, _ := sous.NewStateManagerSpyFor(s)
@@ -209,7 +225,11 @@ func TestNewTargetManifest_Existing_withOffset(t *testing.T) {
 }
 
 func TestNewTargetManifest(t *testing.T) {
-	detected := userSelectedOTPLDeployManifest{}
+	detected := userSelectedOTPLDeployManifest{
+		&sous.Manifest{
+			Owners: []string{"some", "owners"},
+		},
+	}
 	sl := sous.MustParseSourceLocation("github.com/user/project")
 	flavor := "some-flavor"
 	mid := sous.ManifestID{Source: sl, Flavor: flavor}
@@ -245,6 +265,7 @@ func TestNewTargetManifest(t *testing.T) {
 	}
 
 	var expected = &sous.Manifest{
+		Owners: []string{"some", "owners"},
 		Source: sl,
 		Kind:   "http-service",
 		Flavor: flavor,

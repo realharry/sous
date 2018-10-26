@@ -70,6 +70,7 @@ func TestUpdateSuccessMessage(t *testing.T) {
 			Cluster: "test-example",
 		},
 		&sous.Manifest{
+			Owners: []string{"some", "owners"},
 			Source: sous.SourceLocation{
 				Repo: "github.com/opentable/example",
 				Dir:  "first",

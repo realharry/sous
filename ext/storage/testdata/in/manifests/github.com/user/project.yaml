@@ -1,5 +1,7 @@
 Source: github.com/user/project
-Owners: []
+Owners:
+- Judson
+- Sam
 Kind: http-service
 Deployments:
   cluster-1:

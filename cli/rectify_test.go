@@ -16,10 +16,13 @@ func TestPredicateBuilder(t *testing.T) {
 	rs := []string{"github.com/ot/one", "github.com/ot/two"}
 	os := []string{"up", "down"}
 
+	var emptyStruct struct{}
+
 	for _, c := range cs {
 		for _, r := range rs {
 			for _, o := range os {
 				ds = append(ds, &sous.Deployment{
+					Owners:      sous.OwnerSet{"some@owner": emptyStruct},
 					ClusterName: c,
 					SourceID: sous.SourceID{
 						Location: sous.SourceLocation{

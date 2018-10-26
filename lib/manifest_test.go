@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/samsalisbury/semv"
 )
 
@@ -81,21 +84,29 @@ var manifestTests = []struct {
 	FlawDesc, RepairError           string
 }{
 	{
-		TestName:         "empty missing kind",
-		OriginalManifest: &Manifest{},
-		FixedManifest:    &Manifest{Kind: ManifestKindService},
-		FlawDesc:         `manifest "" missing Kind`},
+		TestName: "empty missing kind",
+		OriginalManifest: &Manifest{
+			Owners: []string{"owners"}},
+		FixedManifest: &Manifest{
+			Owners: []string{"owners"},
+			Kind:   ManifestKindService},
+		FlawDesc: `manifest "" missing Kind`},
 	{
-		TestName:         "invalid kind",
-		OriginalManifest: &Manifest{Kind: "some invalid kind"},
-		FixedManifest:    &Manifest{Kind: "some invalid kind"},
-		FlawDesc:         `ManifestKind "some invalid kind" not valid`,
-		RepairError:      "unable to repair invalid ManifestKind",
+		TestName: "invalid kind",
+		OriginalManifest: &Manifest{
+			Owners: []string{"owners"},
+			Kind:   "some invalid kind"},
+		FixedManifest: &Manifest{
+			Owners: []string{"owners"},
+			Kind:   "some invalid kind"},
+		FlawDesc:    `ManifestKind "some invalid kind" not valid`,
+		RepairError: "unable to repair invalid ManifestKind",
 	},
 	{
 		TestName: "missing memory resource",
 		OriginalManifest: &Manifest{
-			Kind: ManifestKindService,
+			Owners: []string{"owners"},
+			Kind:   ManifestKindService,
 			Deployments: DeploySpecs{
 				"some-cluster": DeploySpec{
 					DeployConfig: DeployConfig{
@@ -112,7 +123,8 @@ var manifestTests = []struct {
 			},
 		},
 		FixedManifest: &Manifest{
-			Kind: ManifestKindService,
+			Owners: []string{"owners"},
+			Kind:   ManifestKindService,
 			Deployments: DeploySpecs{
 				"some-cluster": DeploySpec{
 					DeployConfig: DeployConfig{
@@ -134,7 +146,8 @@ var manifestTests = []struct {
 		// NOTE: This one is valid, hence no FlawDesc.
 		TestName: "valid",
 		OriginalManifest: &Manifest{
-			Kind: ManifestKindService,
+			Owners: []string{"owners"},
+			Kind:   ManifestKindService,
 			Deployments: DeploySpecs{
 				"some-cluster": DeploySpec{
 					DeployConfig: DeployConfig{
@@ -151,6 +164,18 @@ var manifestTests = []struct {
 			},
 		},
 	},
+}
+
+func TestManifest_ValidateNoOwnersExpectFatalFlaw(t *testing.T) {
+	m := &Manifest{
+		Kind: ManifestKindService,
+	}
+	flaws := m.Validate()
+	require.Equal(t, 1, len(flaws), "Expected one fatal flaw...")
+
+	err := flaws[0].Repair()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "missing Owners: cannot be repaired")
 }
 
 func TestManifest_Validate(t *testing.T) {

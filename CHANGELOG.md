@@ -10,6 +10,8 @@ with respect to its command line interface and HTTP interface
 
 ## [0.5.120](//github.com/opentable/sous/compare/0.5.117...0.5.120)
 ### Fixed
+* Manifest validation now requires non-empty Owners field.
+  NOTE: this will be a user experience hit, and needs to be highlighted to our users before deploy.
 * Deployments to PROD clusters will use Jenkins agents with 'mesos-prod-sc'
   label (jenkins agents in PROD) to avoid QA -> PROD type of deployments.
 * A race condition during whole-cluster resolutions meant the final status

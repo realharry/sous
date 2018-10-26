@@ -84,7 +84,10 @@ func TestHandlesManifestGetBadURL(t *testing.T) {
 	q, err := url.ParseQuery("repo=gh&repo=gh")
 	require.NoError(err)
 	state := sous.NewState()
-	state.Manifests.Add(&sous.Manifest{Source: sous.SourceLocation{Repo: "gh"}})
+	state.Manifests.Add(&sous.Manifest{
+		Owners: []string{"some", "owners"},
+		Source: sous.SourceLocation{Repo: "gh"},
+	})
 
 	th := &GETManifestHandler{
 		State:       state,
@@ -102,7 +105,10 @@ func TestHandlesManifestGet(t *testing.T) {
 	q, err := url.ParseQuery("repo=gh")
 	require.NoError(err)
 	state := sous.NewState()
-	state.Manifests.Add(&sous.Manifest{Source: sous.SourceLocation{Repo: "gh"}})
+	state.Manifests.Add(&sous.Manifest{
+		Owners: []string{"some", "owners"},
+		Source: sous.SourceLocation{Repo: "gh"},
+	})
 
 	th := &GETManifestHandler{
 		State:       state,
@@ -121,6 +127,7 @@ func TestHandlesManifestPut(t *testing.T) {
 	require.NoError(err)
 	state := sous.NewState()
 	state.Manifests.Add(&sous.Manifest{
+		Owners: []string{"sam", "judson"},
 		Source: sous.SourceLocation{Repo: "gh"},
 		Kind:   sous.ManifestKindService,
 	})

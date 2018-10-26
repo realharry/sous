@@ -97,6 +97,7 @@ func TestUpdateRetryLoop(t *testing.T) {
 	depID := sous.DeploymentID{Cluster: "test-cluster", ManifestID: sous.MustParseManifestID("github.com/user/project")}
 	sourceID := sous.MustNewSourceID("github.com/user/project", "", "1.2.3")
 	mani := &sous.Manifest{
+		Owners: []string{"some", "owners"},
 		Source: sourceID.Location,
 		Kind:   sous.ManifestKindService,
 
@@ -150,6 +151,7 @@ func TestSousUpdate_Execute(t *testing.T) {
 			Dir:  "",
 		},
 		Flavor: "",
+		Owners: []string{"some", "owners"},
 		Kind:   sous.ManifestKindService,
 		Deployments: map[string]sous.DeploySpec{
 			"test-cluster": {

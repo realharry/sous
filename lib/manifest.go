@@ -123,6 +123,9 @@ func (m *Manifest) Equal(o *Manifest) bool {
 // Validate implements Flawed for State
 func (m *Manifest) Validate() []Flaw {
 	var flaws []Flaw
+	if len(m.Owners) == 0 {
+		flaws = append(flaws, FatalFlaw("manifest %q missing Owners", m.ID()))
+	}
 	if m.Kind == "" {
 		flaws = append(flaws, NewFlaw(
 			fmt.Sprintf("manifest %q missing Kind", m.ID()),

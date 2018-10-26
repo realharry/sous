@@ -72,6 +72,7 @@ func DeployConfigFixture(name string) DeployConfig {
 // * (default) a repeating "example" repo
 // * sequenced-repo - uses sequences to return distinct deployments
 func DeploymentFixture(name string) *Deployment {
+	var emptyStruct struct{}
 	switch name {
 	case "sequenced-repo":
 		return &Deployment{
@@ -85,7 +86,7 @@ func DeploymentFixture(name string) *Deployment {
 				Version: semv.MustParse("0.0.1"),
 			},
 			Flavor: "",
-			Owners: OwnerSet{},
+			Owners: OwnerSet{"some owner": emptyStruct},
 			Kind:   ManifestKindService,
 			//Cluster *Cluster,
 		}
@@ -101,7 +102,7 @@ func DeploymentFixture(name string) *Deployment {
 				Version: semv.MustParse("0.0.1"),
 			},
 			Flavor: "",
-			Owners: OwnerSet{},
+			Owners: OwnerSet{"some owner": emptyStruct},
 			Kind:   ManifestKindService,
 			//Cluster *Cluster,
 		}
