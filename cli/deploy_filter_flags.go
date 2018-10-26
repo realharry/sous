@@ -33,6 +33,10 @@ const (
 	-cluster CLUSTER
 		the deployment environment to consider`
 
+	ownersFlagHelp = `
+	-owners OWNERS
+		the list of owners emails (semicolon separated)`
+
 	allFlagHelp = `
 	-all
 	  all deployments should be considered`

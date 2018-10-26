@@ -31,7 +31,13 @@ func TestSmoke(t *testing.T) {
 	m.Run("simple", func(t *testing.T, f *fixture) {
 		client := setupProject(t, f, f.Projects.HTTPServer())
 
-		flags := &sousFlags{kind: "http-service", tag: "1.2.3", cluster: "cluster1", repo: "github.com/user1/repo1"}
+		flags := &sousFlags{
+			owners:  "owner@one",
+			kind:    "http-service",
+			tag:     "1.2.3",
+			cluster: "cluster1",
+			repo:    "github.com/user1/repo1",
+		}
 		reqID := f.DefaultSingReqID(t, flags)
 
 		initBuildDeploy(t, client, flags, setMinimalMemAndCPUNumInst1)
@@ -44,7 +50,12 @@ func TestSmoke(t *testing.T) {
 	m.Run("fail-zero-instances", func(t *testing.T, f *fixture) {
 		client := setupProject(t, f, f.Projects.HTTPServer())
 
-		flags := &sousFlags{kind: "http-service", tag: "1.2.3", repo: "github.com/user1/repo1"}
+		flags := &sousFlags{
+			owners: "owner@one",
+			kind:   "http-service",
+			tag:    "1.2.3",
+			repo:   "github.com/user1/repo1",
+		}
 
 		initBuild(t, client, flags, setMinimalMemAndCPUNumInst0)
 
@@ -57,7 +68,11 @@ func TestSmoke(t *testing.T) {
 
 		client := setupProject(t, f, f.Projects.Failer())
 
-		flags := &sousFlags{kind: "http-service", tag: "1.2.3"}
+		flags := &sousFlags{
+			owners: "owner@one",
+			kind:   "http-service",
+			tag:    "1.2.3",
+		}
 
 		initBuild(t, client, flags, setMinimalMemAndCPUNumInst1)
 
@@ -85,7 +100,13 @@ func TestSmoke(t *testing.T) {
 
 		client := setupProject(t, f, f.Projects.Failer())
 
-		flags := &sousFlags{kind: "http-service", tag: "1.2.3", cluster: "cluster1", repo: "github.com/user1/repo1"}
+		flags := &sousFlags{
+			owners:  "owner@one",
+			kind:    "http-service",
+			tag:     "1.2.3",
+			cluster: "cluster1",
+			repo:    "github.com/user1/repo1",
+		}
 
 		initBuild(t, client, flags, setMinimalMemAndCPUNumInst1)
 
@@ -101,8 +122,12 @@ func TestSmoke(t *testing.T) {
 		client := setupProject(t, f, f.Projects.HTTPServer())
 
 		flags := &sousFlags{
-			kind: "http-service", tag: "1.2.3", cluster: "cluster1",
-			flavor: "flavor1", repo: "github.com/user1/repo1",
+			owners:  "owner@one",
+			kind:    "http-service",
+			tag:     "1.2.3",
+			cluster: "cluster1",
+			flavor:  "flavor1",
+			repo:    "github.com/user1/repo1",
 		}
 
 		initBuildDeploy(t, client, flags, setMinimalMemAndCPUNumInst1)
@@ -116,7 +141,13 @@ func TestSmoke(t *testing.T) {
 	m.Run("pause-unpause", func(t *testing.T, f *fixture) {
 		client := setupProject(t, f, f.Projects.HTTPServer())
 
-		flags := &sousFlags{kind: "http-service", tag: "1", cluster: "cluster1", repo: "github.com/user1/repo1"}
+		flags := &sousFlags{
+			owners:  "owner@one",
+			kind:    "http-service",
+			tag:     "1",
+			cluster: "cluster1",
+			repo:    "github.com/user1/repo1",
+		}
 
 		initBuildDeploy(t, client, flags, setMinimalMemAndCPUNumInst1)
 
@@ -140,7 +171,13 @@ func TestSmoke(t *testing.T) {
 	m.Run("scheduled", func(t *testing.T, f *fixture) {
 		client := setupProject(t, f, f.Projects.Sleeper())
 
-		flags := &sousFlags{kind: "scheduled", tag: "1.2.3", cluster: "cluster1", repo: "github.com/user1/repo1"}
+		flags := &sousFlags{
+			owners:  "owner@one",
+			kind:    "scheduled",
+			tag:     "1.2.3",
+			cluster: "cluster1",
+			repo:    "github.com/user1/repo1",
+		}
 
 		initBuildDeploy(t, client, flags, func(m sous.Manifest) sous.Manifest {
 			clusterName := "cluster1" + f.ClusterSuffix
@@ -163,7 +200,13 @@ func TestSmoke(t *testing.T) {
 	m.Run("custom-reqid-first-deploy", func(t *testing.T, f *fixture) {
 		client := setupProject(t, f, f.Projects.HTTPServer())
 
-		flags := &sousFlags{kind: "http-service", tag: "1.2.3", cluster: "cluster1", repo: "github.com/user1/repo1"}
+		flags := &sousFlags{
+			owners:  "owner@one",
+			kind:    "http-service",
+			tag:     "1.2.3",
+			cluster: "cluster1",
+			repo:    "github.com/user1/repo1",
+		}
 
 		customID := "some-custom-req-id" + f.ClusterSuffix
 
@@ -180,7 +223,13 @@ func TestSmoke(t *testing.T) {
 	m.Run("custom-reqid-second-deploy", func(t *testing.T, f *fixture) {
 		client := setupProject(t, f, f.Projects.HTTPServer())
 
-		flags := &sousFlags{kind: "http-service", tag: "1.2.3", cluster: "cluster1", repo: "github.com/user1/repo1"}
+		flags := &sousFlags{
+			owners:  "owner@one",
+			kind:    "http-service",
+			tag:     "1.2.3",
+			cluster: "cluster1",
+			repo:    "github.com/user1/repo1",
+		}
 
 		initBuildDeploy(t, client, flags, setMinimalMemAndCPUNumInst1)
 
@@ -209,7 +258,13 @@ func TestSmoke(t *testing.T) {
 	m.Run("change-reqid", func(t *testing.T, f *fixture) {
 		client := setupProject(t, f, f.Projects.HTTPServer())
 
-		flags := &sousFlags{kind: "http-service", tag: "1.2.3", cluster: "cluster1", repo: "github.com/user1/repo1"}
+		flags := &sousFlags{
+			owners:  "owner@one",
+			kind:    "http-service",
+			tag:     "1.2.3",
+			cluster: "cluster1",
+			repo:    "github.com/user1/repo1",
+		}
 
 		customID1 := "some-custom-req-id1" + f.ClusterSuffix
 

@@ -7,6 +7,7 @@ type sousFlags struct {
 	repo    string
 	offset  string
 	tag     string
+	owners  string
 }
 
 // SourceLocationFlags are flags that determine a source location.
@@ -61,6 +62,7 @@ func (f *sousFlags) SousInitFlags() *sousFlags {
 	}
 	initFlags := f.ManifestIDFlags()
 	initFlags.kind = f.kind
+	initFlags.owners = f.owners
 	return initFlags
 }
 
@@ -100,6 +102,9 @@ func (f *sousFlags) FlagMap() map[string]string {
 	}
 	if f.tag != "" {
 		m["tag"] = f.tag
+	}
+	if f.owners != "" {
+		m["owners"] = f.owners
 	}
 	return m
 }
