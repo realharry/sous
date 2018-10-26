@@ -3,6 +3,7 @@ package cli
 import (
 	"flag"
 	"fmt"
+	"strings"
 
 	"github.com/opentable/sous/config"
 	"github.com/opentable/sous/graph"
@@ -111,6 +112,7 @@ func (si *SousInit) Execute(args []string) cmdr.Result {
 	}
 
 	m.Kind = kind
+	m.Owners = strings.Split(si.flags.Owners, ":")
 
 	if cluster != "" {
 		ds := sous.DeploySpecs{cluster: m.Deployments[cluster]}

@@ -32,7 +32,7 @@ func TestSmoke(t *testing.T) {
 		client := setupProject(t, f, f.Projects.HTTPServer())
 
 		flags := &sousFlags{
-			owners:  "owner@one",
+			owners:  "owner@one:owner@two",
 			kind:    "http-service",
 			tag:     "1.2.3",
 			cluster: "cluster1",

@@ -35,7 +35,7 @@ const (
 
 	ownersFlagHelp = `
 	-owners OWNERS
-		the list of owners emails (semicolon separated)`
+		the list of owners emails (colon separated)`
 
 	allFlagHelp = `
 	-all
