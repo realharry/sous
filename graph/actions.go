@@ -239,6 +239,10 @@ func (di *SousGraph) GetDeploy(opts DeployActionOpts) (actions.Action, error) {
 	}
 	rf := (*sous.ResolveFilter)(scoop.ResolveFilter)
 
+	if _, err := rf.Tag.Value(); err != nil {
+		return nil, fmt.Errorf("you must provide the -tag flag (no git tag found)")
+	}
+
 	client := scoop.HTTP.HTTPClient
 	if os.Getenv("SOUS_USE_SOUS_SERVER") == "YES" {
 		messages.ReportLogFieldsMessageToConsole(fmt.Sprintf("TraceID: %s", scoop.TraceID), logging.DebugLevel, scoop.LogSink.LogSink, scoop.TraceID)
