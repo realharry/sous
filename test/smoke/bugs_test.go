@@ -58,4 +58,17 @@ func TestBugs(t *testing.T) {
 
 		p.MustRun(t, "build", flags)
 	})
+
+	m.Run("semver-prerelease-tag-missing", func(t *testing.T, f *fixture) {
+		p := setupProject(t, f, f.Projects.HTTPServer())
+		flags := &sousFlags{
+			repo:    p.repo,
+			tag:     "1.2.3-prerelease1",
+			kind:    "http-service",
+			cluster: "cluster1",
+		}
+		initBuild(t, p, flags, setMinimalMemAndCPUNumInst1)
+
+		p.MustRun(t, "deploy", flags.SousDeployFlags())
+	})
 }
