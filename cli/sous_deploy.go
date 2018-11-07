@@ -59,6 +59,9 @@ func (sd *SousDeploy) Execute(args []string) cmdr.Result {
 	if sd.RFF.Cluster.All() {
 		return cmdr.UsageErrorf("you must provide the -cluster flag")
 	}
+	if sd.RFF.Tag.All() {
+		return cmdr.UsageErrorf("you must provide the -tag flag (no git tag found)")
+	}
 
 	deploy, err := sd.SousGraph.GetDeploy(sd.opts)
 
