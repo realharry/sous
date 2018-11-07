@@ -77,9 +77,6 @@ func (c *sousClient) insertClusterSuffix(args []string) []string {
 		if s == "-cluster" && len(args) > i+1 {
 			args[i+1] = c.FixtureConfig.IsolatedClusterName(args[i+1])
 		}
-		if s == "-tag" && len(args) > i+1 {
-			args[i+1] = c.FixtureConfig.IsolatedVersionTag(args[i+1])
-		}
 	}
 	return args
 }
