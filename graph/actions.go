@@ -222,7 +222,6 @@ type DeployActionOpts struct {
 // GetDeploy constructs a Deploy Actions.
 func (di *SousGraph) GetDeploy(opts DeployActionOpts) (actions.Action, error) {
 	di.guardedAdd("Dryrun", DryrunOption(opts.DryRun))
-	di.guardedAdd("DeployFilterFlags", &opts.DFF)
 
 	scoop := struct {
 		ResolveFilter    *RefinedResolveFilter

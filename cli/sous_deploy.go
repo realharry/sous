@@ -16,6 +16,8 @@ type SousDeploy struct {
 	SousGraph *graph.SousGraph
 
 	opts graph.DeployActionOpts
+
+	RFF *graph.RefinedResolveFilter
 }
 
 func init() { TopLevelCommands["deploy"] = &SousDeploy{} }
@@ -46,8 +48,18 @@ func (sd *SousDeploy) AddFlags(fs *flag.FlagSet) {
 		"If this is the first deployment to this cluster; set the Singularity request ID to this value.")
 }
 
+// RegisterOn adds DeployFilterFlags.
+func (sd *SousDeploy) RegisterOn(psy Addable) {
+	psy.Add(&sd.opts.DFF)
+}
+
 // Execute fulfills the cmdr.Executor interface.
 func (sd *SousDeploy) Execute(args []string) cmdr.Result {
+
+	if sd.RFF.Cluster.All() {
+		return cmdr.UsageErrorf("you must provide the -cluster flag")
+	}
+
 	deploy, err := sd.SousGraph.GetDeploy(sd.opts)
 
 	if err != nil {
