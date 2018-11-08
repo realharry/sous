@@ -75,18 +75,6 @@ func (dfi *dockerfileInspector) mergeEnv(env map[string]string) {
 	}
 }
 
-/*
-func (dfi *dockerfileInspector) processEnv() error {
-	for _, e := range dfi.envs {
-		if e.Value == SOUS_RUN_IMAGE_SPEC {
-			messages.ReportLogFieldsMessage("RunSpec path found Dockerfile ENV or ONBUILD ENV", logging.DebugLevel, dfi.ls, e.Next.Value)
-			dfi.runspecPath = e.Next.Value
-		}
-	}
-	return nil
-}
-*/
-
 func (dfi *dockerfileInspector) absorbDocker(ast *parser.Node) error {
 	// Parse for ENV SOUS_RUN_IMAGE_SPEC
 	// Parse for FROM
