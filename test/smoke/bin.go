@@ -272,7 +272,7 @@ func (c *Bin) configureCommand(i invocation) (*PreparedCmd, error) {
 		}
 		cmdStr := fmt.Sprintf("%s$> %s", relPath, i)
 		rtLog("%s:%s", c.ID(), cmdStr)
-		fmt.Fprintf(allFiles, cmdStr)
+		fmt.Fprintf(allFiles, cmdStr+"\n")
 		return nil
 	}
 
@@ -342,15 +342,16 @@ func (c *Bin) MustRun(t *testing.T, subcmd string, f Flags, args ...string) stri
 // MustFail fails the test if the command succeeds with a non-zero exit code.
 // If the command fails for a different reason (e.g. failure to connect pipes),
 // then the test also fails, as that is not the kind of failure we are looking
-// for.
-func (c *Bin) MustFail(t *testing.T, subcmd string, f Flags, args ...string) {
+// for. It returns stderr from the command.
+func (c *Bin) MustFail(t *testing.T, subcmd string, f Flags, args ...string) string {
 	t.Helper()
-	_, err := c.Run(t, subcmd, f, args...)
+	executed, err := c.Run(t, subcmd, f, args...)
 	if err == nil {
-		t.Fatalf("command should have failed: sous %s", args)
+		t.Fatalf("Command should have failed: %s", executed.invocation)
 	}
 	_, ok := err.(*exec.ExitError)
 	if !ok {
-		t.Fatalf("want non-zero exit code (exec.ExecError); was a %T: %s", err, err)
+		t.Fatalf("Want non-zero exit code (exec.ExecError); was a %T: %s", err, err)
 	}
+	return executed.Stderr.String()
 }

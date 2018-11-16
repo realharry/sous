@@ -30,7 +30,7 @@ func TestHarvestGuessedRepo(t *testing.T) {
 	assert.NoError(err)
 
 	sl := sous.SourceLocation{
-		Repo: "https://github.com/opentable/wackadoo",
+		Repo: "github.com/opentable/wackadoo",
 		Dir:  "nested/there",
 	}
 
@@ -39,6 +39,46 @@ func TestHarvestGuessedRepo(t *testing.T) {
 	nc.harvest(sl)
 
 	assert.Len(dc.CallsTo("AllTags"), 1)
+}
+
+func TestNameCache_Insert_duplicateVersionNewDigest(t *testing.T) {
+	assert := assert.New(t)
+	dc := docker_registry.NewDummyClient()
+
+	host := "docker.repo.io"
+	base := "ot/wackadoo"
+	digest := "sha256:012345678901234567890123456789AB012345678901234567890123456789AB"
+
+	buildArtifact := func(in, dn string) sous.BuildArtifact {
+		return sous.BuildArtifact{
+			DigestReference: dn,
+			VersionName:     in,
+			Qualities:       []sous.Quality{},
+		}
+	}
+	nc, err := NewNameCache(host, dc, logging.SilentLogSet(), sous.SetupDB(t))
+	defer sous.ReleaseDB(t)
+	assert.NoError(err)
+
+	versionIn := "1.2.3"
+	sv := sous.MustNewSourceID("https://github.com/opentable/wackadoo", "nested/there", versionIn)
+	dn := base + "@" + digest
+	in := base + ":" + versionIn
+
+	// First insert.
+	assert.NoError(nc.Insert(sv, buildArtifact(in, dn)))
+
+	// Second insert (same data == OK)
+	assert.NoError(nc.Insert(sv, buildArtifact(in, dn)))
+
+	dn = base + "@" + "sha256:AB2345678901234567890123456789AB012345678901234567890123456789AB"
+
+	// Third insert, new digest, same version == error, that's what we want.
+	err = nc.Insert(sv, buildArtifact(in, dn))
+	if assert.Error(err) {
+		assert.Contains(err.Error(), "violates unique constraint")
+	}
+
 }
 
 func TestRoundTrip(t *testing.T) {
@@ -63,7 +103,7 @@ func TestRoundTrip(t *testing.T) {
 			defer sous.ReleaseDB(t)
 			assert.NoError(err)
 
-			sv := sous.MustNewSourceID("https://github.com/opentable/wackadoo", "nested/there", versionIn)
+			sv := sous.MustNewSourceID("github.com/opentable/wackadoo", "nested/there", versionIn)
 			dn := base + "@" + digest
 			in := base + ":" + versionIn
 			err = nc.Insert(sv, buildArtifact(in, dn))
@@ -82,7 +122,7 @@ func TestRoundTrip(t *testing.T) {
 				assert.Equal(dn, cn, "GetCanonicalName(version)")
 			}
 
-			osv := sous.MustNewSourceID("https://github.com/opentable/wackadoo", "nested/there", versionOut)
+			osv := sous.MustNewSourceID("github.com/opentable/wackadoo", "nested/there", versionOut)
 			nin, _, err := nc.getImageName(osv)
 			if assert.NoError(err) {
 				assert.Equal(dn, nin, "getImageName")
@@ -99,7 +139,7 @@ func TestRejectNonDigestedNames(t *testing.T) {
 	dc := docker_registry.NewDummyClient()
 	nc, err := NewNameCache(host, dc, logging.SilentLogSet(), sous.SetupDB(t))
 	require.NoError(t, err)
-	sid := sous.MustNewSourceID("https://github.com/opentable/wackadoo", "nested/there", "1.2.3")
+	sid := sous.MustNewSourceID("github.com/opentable/wackadoo", "nested/there", "1.2.3")
 
 	assert.Error(t, nc.Insert(sid, sous.BuildArtifact{DigestReference: "ot/wackadoo:latest"}))
 	assert.Error(t, nc.Insert(sid, sous.BuildArtifact{DigestReference: "ot/wackadoo:1.2.3"}))
@@ -113,7 +153,7 @@ func TestCacheLookup(t *testing.T) {
 	base := "ot/wackadoo"
 	digest := "sha256:012345678901234567890123456789AB012345678901234567890123456789AB"
 
-	newSV := sous.MustNewSourceID("https://github.com/opentable/wackadoo", "nested/there", "1.2.42")
+	newSV := sous.MustNewSourceID("github.com/opentable/wackadoo", "nested/there", "1.2.42")
 
 	nc, err := NewNameCache(host, dc, logging.SilentLogSet(), sous.SetupDB(t))
 	defer sous.ReleaseDB(t)
@@ -159,7 +199,7 @@ func TestCanonicalizesToConfiguredRegistry(t *testing.T) {
 	primaryDigestName := dockerCache + "/" + base + "@" + digest
 	cacheDigestName := dockerCache + "/" + base + "@" + digest
 
-	newSV := sous.MustNewSourceID("https://github.com/opentable/wackadoo", "nested/there", "1.2.42")
+	newSV := sous.MustNewSourceID("github.com/opentable/wackadoo", "nested/there", "1.2.42")
 
 	cn := base + "@" + digest
 	dc.AddMetadata(dockerPrimary+`.*`, docker_registry.Metadata{
@@ -218,7 +258,7 @@ func TestLeavesRegistryUnchangedWhenUnknown(t *testing.T) {
 	primaryTagName := dockerPrimary + "/" + in
 	primaryDigestName := dockerPrimary + "/" + base + "@" + digest
 
-	newSV := sous.MustNewSourceID("https://github.com/opentable/wackadoo", "nested/there", "1.2.42")
+	newSV := sous.MustNewSourceID("github.com/opentable/wackadoo", "nested/there", "1.2.42")
 
 	cn := base + "@" + digest
 	dc.AddMetadata(dockerPrimary+`.*`, docker_registry.Metadata{
@@ -360,10 +400,10 @@ func TestHarvesting(t *testing.T) {
 	assert.NoError(err)
 
 	v := "1.2.3"
-	sv := sous.MustNewSourceID("https://github.com/opentable/wackadoo", "nested/there", v)
+	sv := sous.MustNewSourceID("github.com/opentable/wackadoo", "nested/there", v)
 
 	v2 := "2.3.4"
-	sisterSV := sous.MustNewSourceID("https://github.com/opentable/wackadoo", "nested/there", v2)
+	sisterSV := sous.MustNewSourceID("github.com/opentable/wackadoo", "nested/there", v2)
 
 	tag := "1.2.3"
 	digest := "sha256:012345678901234567890123456789AB012345678901234567890123456789AB"
@@ -415,7 +455,7 @@ func TestRecordAdvisories(t *testing.T) {
 	defer sous.ReleaseDB(t)
 	require.NoError(err)
 	v := "1.2.3"
-	sv := sous.MustNewSourceID("https://github.com/opentable/wackadoo", "nested/there", v)
+	sv := sous.MustNewSourceID("github.com/opentable/wackadoo", "nested/there", v)
 	digest := "sha256:012345678901234567890123456789AB012345678901234567890123456789AB"
 	cn := base + "@" + digest
 
@@ -453,7 +493,7 @@ func TestMissingName(t *testing.T) {
 	assert.NoError(err)
 
 	v := "4.5.6"
-	sv := sous.MustNewSourceID("https://github.com/opentable/brand-new-idea", "nested/there", v)
+	sv := sous.MustNewSourceID("github.com/opentable/brand-new-idea", "nested/there", v)
 	dc.AddMetadata(`.*opentable/brand-new-idea.*`, docker_registry.Metadata{})
 	dc.MatchMethod("GetImageMetadata", spies.AnyArgs, docker_registry.Metadata{}, errors.Errorf("no such MD"))
 
